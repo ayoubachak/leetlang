@@ -61,6 +61,7 @@
     "common.h": "c",
     "stdbool.h": "c",
     "debug.h": "c",
-    "value.h": "c"
+    "value.h": "c",
+    "stdio.h": "c"
   }
 }

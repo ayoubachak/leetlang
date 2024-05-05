@@ -4,10 +4,6 @@
 #include "stdio.h"
 #include "debug.h"
 
-
-
-
-
 int main(int argc, const char* argv[]) {
 
     Chunk chunk;
