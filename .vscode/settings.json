@@ -66,6 +66,7 @@
     "memory.h": "c",
     "compare": "c",
     "type_traits": "c",
-    "vm.h": "c"
+    "vm.h": "c",
+    "stdint.h": "c"
   }
 }
