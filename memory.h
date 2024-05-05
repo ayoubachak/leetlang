@@ -1,5 +1,5 @@
-#ifndef clox_memory_h
-#define clox_memory_h
+#ifndef leetlang_memory_h
+#define leetlang_memory_h
 #include "common.h"
 
 #define GROW_CAPACITY(capacity) \
@@ -13,6 +13,10 @@
     reallocate(pointer, sizeof(type) * (oldCount), 0)
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
+
+void initMemory(void);
+void* customAllocate(size_t size); // I can't be bothered to use this memory management funciton so I'll be using reallocate
+void freeMemory(void);
 
 #endif
 

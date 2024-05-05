@@ -62,6 +62,10 @@
     "stdbool.h": "c",
     "debug.h": "c",
     "value.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "memory.h": "c",
+    "compare": "c",
+    "type_traits": "c",
+    "vm.h": "c"
   }
 }

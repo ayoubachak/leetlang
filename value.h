@@ -1,5 +1,5 @@
-#ifndef clox_value_h
-#define clox_value_h
+#ifndef leetlang_value_h
+#define leetlang_value_h
 #include "common.h"
 
 typedef double Value;
