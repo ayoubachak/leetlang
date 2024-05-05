@@ -67,6 +67,7 @@
     "compare": "c",
     "type_traits": "c",
     "vm.h": "c",
-    "stdint.h": "c"
+    "stdint.h": "c",
+    "compiler.h": "c"
   }
 }

@@ -2,7 +2,7 @@
 #include "debug.h"
 #include "vm.h"
 #include <stdio.h>
-
+#include "compiler.h"
 
 VM vm;
 
@@ -63,7 +63,7 @@ static InterpretResult run() {
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
             case OP_DIVIDE: BINARY_OP(/); break;
-            case OP_NEGATE: push(-pop()); break;
+            case OP_NEGATE: push(-pop()); break; // TODO : optimize this
             case OP_RETURN: {
                 printValue(pop());
                 printf("\n");
@@ -77,8 +77,7 @@ static InterpretResult run() {
 
 }
 
-InterpretResult interpret(Chunk* chunk) {
-    vm.chunk = chunk;
-    vm.ip = vm.chunk->code;
-    return run();
+InterpretResult interpret(const char* source) {
+    compile(source);
+    return INTERPRET_OK;
 }
