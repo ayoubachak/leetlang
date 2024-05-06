@@ -1,6 +1,7 @@
 // memory.c
 #include <stdlib.h>
 #include "memory.h"
+#include "vm.h"
 
 // Define the total memory pool size
 #define MEMORY_POOL_SIZE 1024 * 1024 // 1MB for example
@@ -39,5 +40,24 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     return result;
 }
 
+static void freeObject(Obj* object) {
+    switch (object->type) {
+        case OBJ_STRING: {
+            ObjString* string = (ObjString*)object;
+            FREE_ARRAY(char, string->chars, string->length + 1);
+            FREE(ObjString, object);
+            break;
+        }
+    }
+}
+
+void freeObjects() {
+    Obj* object = vm.objects;
+    while (object != NULL) {
+        Obj* next = object->next;
+        freeObject(object);
+        object = next;
+    }
+}
 
 

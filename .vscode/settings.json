@@ -69,6 +69,7 @@
     "vm.h": "c",
     "stdint.h": "c",
     "compiler.h": "c",
-    "stdlib.h": "c"
+    "stdlib.h": "c",
+    "object.h": "c"
   }
 }
