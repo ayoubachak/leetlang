@@ -1,3 +1,4 @@
+// scanner.h
 #ifndef leetlang_scanner_h
 #define leetlang_scanner_h
 

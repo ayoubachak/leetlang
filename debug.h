@@ -1,3 +1,4 @@
+// debug.h
 #ifndef leetlang_debug_h
 #define leetlang_debug_h
 #include "chunk.h"

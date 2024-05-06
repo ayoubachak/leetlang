@@ -1,3 +1,4 @@
+// vm.h
 #ifndef leetlang_vm_h
 #define leetlang_vm_h
 #include "chunk.h"
