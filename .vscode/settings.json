@@ -70,6 +70,7 @@
     "stdint.h": "c",
     "compiler.h": "c",
     "stdlib.h": "c",
-    "object.h": "c"
+    "object.h": "c",
+    "table.h": "c"
   }
 }

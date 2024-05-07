@@ -4,7 +4,16 @@ OBJDIR=temp
 
 
 # Define all your .o files
-OBJS = $(OBJDIR)/main.o $(OBJDIR)/chunk.o $(OBJDIR)/memory.o $(OBJDIR)/debug.o $(OBJDIR)/value.o $(OBJDIR)/vm.o $(OBJDIR)/compiler.o $(OBJDIR)/scanner.o $(OBJDIR)/object.o 
+OBJS = $(OBJDIR)/main.o \
+		$(OBJDIR)/chunk.o \
+		$(OBJDIR)/memory.o \
+		$(OBJDIR)/debug.o \
+		$(OBJDIR)/value.o \
+		$(OBJDIR)/vm.o \
+		$(OBJDIR)/compiler.o \
+		$(OBJDIR)/scanner.o \
+		$(OBJDIR)/object.o \
+		$(OBJDIR)/table.o 
 
 # Define your target executable
 main: $(OBJS)
