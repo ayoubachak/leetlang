@@ -196,6 +196,19 @@ ObjUpvalue* newUpvalue(Value* slot) {
   return upvalue;
 }
 
+ObjExceptionHandler* newExceptionHandler(int catchAddress) {
+    ObjExceptionHandler* handler = ALLOCATE_OBJ(ObjExceptionHandler, OBJ_EXCEPTION_HANDLER);
+    handler->catchAddress = catchAddress;
+    return handler;
+}
+
+ObjString* asString(Obj* obj) {
+    if (obj->type == OBJ_STRING) {
+        return (ObjString*)obj;
+    } else {
+        return NULL; // Return NULL if it is not the correct type
+    }
+}
 
 static void printFunction(ObjFunction* function) {
 

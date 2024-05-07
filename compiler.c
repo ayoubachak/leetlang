@@ -203,12 +203,36 @@ static uint8_t makeConstant(Value value) {
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
     return 0;
+    // printf("Warning : Too many constants in one chunk.");
+    // return constant;
   }
   return (uint8_t)constant;
 }
 
+void writeConstant(Chunk* chunk, Value value, int line) {
+  int constant = addConstant(chunk, value);
+  if (constant <= 255) {
+    writeChunk(chunk, OP_CONSTANT, line);
+    writeChunk(chunk, constant, line);
+  } else {
+    writeChunk(chunk, OP_CONSTANT_LONG, line);
+    writeChunk(chunk, (constant >> 16) & 0xff, line); // Higher byte
+    writeChunk(chunk, (constant >> 8) & 0xff, line);  // Middle byte
+    writeChunk(chunk, constant & 0xff, line);         // Lower byte
+  }
+}
+
 static void emitConstant(Value value) {
-  emitBytes(OP_CONSTANT, makeConstant(value));
+    emitBytes(OP_CONSTANT, makeConstant(value));
+    // this implementation slowed down the process too much 
+    /*
+    int index = makeConstant(value);
+    if (index <= UINT8_MAX) {
+        emitBytes(OP_CONSTANT, (uint8_t)index);
+    } else {
+        writeConstant(currentChunk(), value, parser.previous.line);
+    }
+    */
 }
 
 static void patchJump(int offset) {
@@ -643,6 +667,8 @@ static void this_(bool canAssign) {
 } // [this]
 
 
+
+
 /* Compiling Expressions unary < Global Variables unary
 static void unary() {
 */
@@ -656,6 +682,7 @@ static void unary(bool canAssign) {
   // Emit the operator instruction.
   switch (operatorType) {
     case TOKEN_BANG: emitByte(OP_NOT); break;
+    case TOKEN_NOT: emitByte(OP_NOT); break;
     case TOKEN_MINUS: emitByte(OP_NEGATE); break;
     default: return; // Unreachable.
   }
@@ -683,6 +710,7 @@ ParseRule rules[] = {
   [TOKEN_BANG]          = {NULL,     NULL,   PREC_NONE},
 */
   [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
+  [TOKEN_NOT]          = {unary,    NULL,   PREC_NONE},
 /* Compiling Expressions rules < Types of Values table-equal
   [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PREC_NONE},
 */
@@ -799,7 +827,38 @@ static void block() {
   }
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
+static void tryStatement() {
+    consume(TOKEN_TRY, "Expect 'try' before try block.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before try block body.");
+    beginScope();
+    block();
+    endScope();
 
+    if (match(TOKEN_CATCH)) {
+        consume(TOKEN_LEFT_PAREN, "Expect '(' after 'catch'.");
+        // Assume catch block takes a single parameter, the exception.
+        consume(TOKEN_IDENTIFIER, "Expect identifier.");
+        defineVariable(parseVariable("Expect variable name."));
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after catch parameters.");
+        beginScope();
+        block();
+        endScope();
+    }
+
+    if (match(TOKEN_FINALLY)) {
+        consume(TOKEN_LEFT_BRACE, "Expect '{' before finally block.");
+        beginScope();
+        block();
+        endScope();
+    }
+}
+
+static void throwStatement() {
+    consume(TOKEN_THROW, "Expect 'throw' before an expression.");
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after throw expression.");
+    emitByte(OP_THROW);
+}
 static void function(FunctionType type) {
   Compiler compiler;
   initCompiler(&compiler, type);

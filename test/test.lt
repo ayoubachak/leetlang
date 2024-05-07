@@ -1,8 +1,22 @@
 fun bench(){
     var c = clock();
     for (var i = 0; i < 1000000; i=i+1){
-        var a = 1;
+        
     }
     print(clock() - c);
 }
 bench();
+// TODO : fix the try except
+// try {
+//     throw "Error occurred";
+// } catch (e) {
+//     print "Caught error: " + e;
+// } finally {
+//     print "Cleanup actions";
+// };
+
+print(nil);
+
+assert(true, "This should not fail.");
+print assert(false, "This should fail and print this message.");
+
