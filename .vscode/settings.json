@@ -71,6 +71,8 @@
     "compiler.h": "c",
     "stdlib.h": "c",
     "object.h": "c",
-    "table.h": "c"
+    "table.h": "c",
+    "string.h": "c",
+    "scanner.h": "c"
   }
 }
