@@ -49,32 +49,30 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_STRING,
     OBJ_UPVALUE,
+    OBJ_EXCEPTION,
     OBJ_EXCEPTION_HANDLER
 } ObjType;
 
 
 struct Obj {
   ObjType type;
-
   bool isMarked;
-
-
   struct Obj* next;
-
 };
 
 
 typedef struct {
   Obj obj;
   int arity;
-
   int upvalueCount;
-
   Chunk chunk;
   ObjString* name;
 } ObjFunction;
 
-
+typedef struct {
+    Obj obj;
+    ObjString* message;  // Message for exception details
+} ObjException;
 
 typedef Value (*NativeFn)(int argCount, Value* args);
 
@@ -83,15 +81,11 @@ typedef struct {
   NativeFn function;
 } ObjNative;
 
-
-
 struct ObjString {
   Obj obj;
   int length;
   char* chars;
-
   uint32_t hash;
-
 };
 
 
@@ -110,23 +104,17 @@ typedef struct ObjUpvalue {
 typedef struct {
   Obj obj;
   ObjFunction* function;
-
   ObjUpvalue** upvalues;
   int upvalueCount;
-
 } ObjClosure;
-
-
-
-typedef struct {
+typedef struct ObjClass ObjClass; 
+typedef struct ObjClass {
   Obj obj;
   ObjString* name;
-
   Table methods;
-
+  int superclassCount;
+  ObjClass** superclasses;
 } ObjClass;
-
-
 
 typedef struct {
   Obj obj;
@@ -149,34 +137,19 @@ typedef struct {
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method);
-
-
 ObjClass* newClass(ObjString* name);
-
-
 ObjClosure* newClosure(ObjFunction* function);
-
-
 ObjFunction* newFunction();
-
-
 ObjInstance* newInstance(ObjClass* klass);
-
-
 ObjNative* newNative(NativeFn function);
-
-
 ObjString* takeString(char* chars, int length);
-
-
 ObjString* copyString(const char* chars, int length);
-
+void classAddSuperclass(ObjClass* klass, ObjClass* superclass);
 ObjUpvalue* newUpvalue(Value* slot);
 ObjString* asString(Obj* obj);
+ObjException* newException(ObjString* message);
 ObjExceptionHandler* newExceptionHandler(int catchAddress);
 void printObject(Value value);
-
-
 
 
 static inline bool isObjType(Value value, ObjType type) {

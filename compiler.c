@@ -827,24 +827,23 @@ static void block() {
   }
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
+
+
 static void tryStatement() {
     consume(TOKEN_TRY, "Expect 'try' before try block.");
     consume(TOKEN_LEFT_BRACE, "Expect '{' before try block body.");
     beginScope();
     block();
     endScope();
-
     if (match(TOKEN_CATCH)) {
         consume(TOKEN_LEFT_PAREN, "Expect '(' after 'catch'.");
-        // Assume catch block takes a single parameter, the exception.
-        consume(TOKEN_IDENTIFIER, "Expect identifier.");
+        consume(TOKEN_IDENTIFIER, "Expect identifier for exception.");
         defineVariable(parseVariable("Expect variable name."));
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after catch parameters.");
         beginScope();
         block();
         endScope();
     }
-
     if (match(TOKEN_FINALLY)) {
         consume(TOKEN_LEFT_BRACE, "Expect '{' before finally block.");
         beginScope();
@@ -853,12 +852,6 @@ static void tryStatement() {
     }
 }
 
-static void throwStatement() {
-    consume(TOKEN_THROW, "Expect 'throw' before an expression.");
-    expression();
-    consume(TOKEN_SEMICOLON, "Expect ';' after throw expression.");
-    emitByte(OP_THROW);
-}
 static void function(FunctionType type) {
   Compiler compiler;
   initCompiler(&compiler, type);
@@ -905,41 +898,58 @@ static void method() {
 
 
 static void classDeclaration() {
-  consume(TOKEN_IDENTIFIER, "Expect class name.");
-  Token className = parser.previous;
-  uint8_t nameConstant = identifierConstant(&parser.previous);
-  declareVariable();
-  emitBytes(OP_CLASS, nameConstant);
-  defineVariable(nameConstant);
-  ClassCompiler classCompiler;
-  classCompiler.hasSuperclass = false;
-  classCompiler.enclosing = currentClass;
-  currentClass = &classCompiler;
-  if (match(TOKEN_LESS)) {
-    consume(TOKEN_IDENTIFIER, "Expect superclass name.");
-    variable(false);
-    if (identifiersEqual(&className, &parser.previous)) {
-      error("A class can't inherit from itself.");
+    consume(TOKEN_IDENTIFIER, "Expect class name.");
+    Token className = parser.previous;
+    uint8_t nameConstant = identifierConstant(&parser.previous);
+    declareVariable();
+    emitBytes(OP_CLASS, nameConstant);
+    defineVariable(nameConstant);
+
+    ClassCompiler classCompiler;
+    classCompiler.hasSuperclass = false;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
+    // Check for a list of superclasses
+    if (match(TOKEN_LESS) || match(TOKEN_LEFT_PAREN)) {
+        do {
+            consume(TOKEN_IDENTIFIER, "Expect superclass name.");
+            variable(false); // Load the superclass
+            if (identifiersEqual(&className, &parser.previous)) {
+                error("A class can't inherit from itself.");
+            }
+
+            if (!classCompiler.hasSuperclass) {
+                beginScope();
+                addLocal(syntheticToken("super"));
+                defineVariable(0);
+                classCompiler.hasSuperclass = true;
+            }
+
+            namedVariable(className, false); // Load the current class
+            emitByte(OP_INHERIT); // Inherit from the current superclass
+        } while (match(TOKEN_COMMA));
+
+        if (check(TOKEN_RIGHT_PAREN)) {
+            consume(TOKEN_RIGHT_PAREN, "Expect ')' after superclasses.");
+        }
     }
-    beginScope();
-    addLocal(syntheticToken("super"));
-    defineVariable(0);
+
     namedVariable(className, false);
-    emitByte(OP_INHERIT);
-    classCompiler.hasSuperclass = true;
-  }
-  namedVariable(className, false);
-  consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
-  while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-    method();
-  }
-  consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
-  emitByte(OP_POP);
-  if (classCompiler.hasSuperclass) {
-    endScope();
-  }
-  currentClass = currentClass->enclosing;
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        method();
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+    emitByte(OP_POP);
+
+    if (classCompiler.hasSuperclass) {
+        endScope();
+    }
+
+    currentClass = currentClass->enclosing;
 }
+
 
 static void funDeclaration() {
   uint8_t global = parseVariable("Expect function name.");
@@ -1027,6 +1037,27 @@ static void ifStatement() {
   emitByte(OP_POP);
   if (match(TOKEN_ELSE)) statement();
   patchJump(elseJump);
+}
+
+static void throwStatement() {
+    consume(TOKEN_THROW, "Expect 'throw' before an expression.");
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after throw expression.");
+    emitByte(OP_THROW);
+}
+
+static void tryCatchFinallyStatement() {
+    int tryJump = emitJump(OP_TRY_START);
+    // Compile try block
+    patchJump(tryJump);
+
+    int catchJump = emitJump(OP_CATCH_START);
+    // Compile catch block
+    patchJump(catchJump);
+
+    emitJump(OP_FINALLY_START);
+    // Compile finally block
+    emitByte(OP_END_TRY_CATCH_FINALLY);
 }
 
 static void printStatement() {
@@ -1119,6 +1150,8 @@ static void statement() {
     returnStatement();
   } else if (match(TOKEN_WHILE)) {
     whileStatement();
+  } else if (match(TOKEN_TRY)) {   // Add this line
+    tryStatement();              // Call the function to handle try statements
   } else if (match(TOKEN_LEFT_BRACE)) {
     beginScope();
     block();

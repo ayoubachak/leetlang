@@ -81,6 +81,62 @@ static void runtimeError(const char* format, ...) {
   resetStack();
 }
 
+// Helper function to check if a class is a subclass of another
+bool isSubclass(ObjClass* derived, ObjClass* superclass) {
+    if (derived == superclass) {
+        return true;
+    }
+    for (int i = 0; i < derived->superclassCount; i++) {
+        if (isSubclass(derived->superclasses[i], superclass)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Check if the object is an instance of the given class or a subclass thereof
+bool instanceOf(ObjInstance* instance, ObjClass* klass) {
+    ObjClass* instanceClass = instance->klass;
+    if (instanceClass == klass) return true;
+
+    for (int i = 0; i < instanceClass->superclassCount; i++) {
+        if (isSubclass(instanceClass->superclasses[i], klass)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static Value exceptionInit(int argCount, Value* args) {
+    // Initialize the exception with a message
+
+    return NIL_VAL;
+}
+
+static Value exceptionGetMessage(int argCount, Value* args) {
+    // Return the message associated with the exception
+    return NIL_VAL;
+}
+
+void defineNativeMethod(ObjClass* klass, const char* name, NativeFn function) {
+    push(OBJ_VAL(copyString(name, (int)strlen(name) )));
+    push(OBJ_VAL(newNative(function)));
+    tableSet(&klass->methods, AS_STRING(vm.stack[0]), vm.stack[1]);
+    pop();
+    pop();
+}
+
+void initExceptionClass() {
+    ObjString* name = copyString("Exception", 9);
+    ObjClass* klass = newClass(name);
+    push(OBJ_VAL(klass)); // Protect from GC
+
+    defineNativeMethod(klass, "init", exceptionInit);
+    defineNativeMethod(klass, "getMessage", exceptionGetMessage);
+
+    tableSet(&vm.globals, name, OBJ_VAL(klass));
+    pop(); // Remove class from stack
+}
 
 static Value clockNative(int argCount, Value* args) {
   return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -619,6 +675,41 @@ static InterpretResult run() {
         frame->ip -= offset;
         break;
       }
+      case OP_THROW: {
+        ObjException* exception = AS_EXCEPTION(pop());
+        // Unwind the stack to find the nearest exception handler
+        // If no handler is found, this results in a runtime error
+        break;
+      }
+      case OP_TRY_START: {
+        int catchOffset = READ_SHORT();
+        push(OBJ_VAL(newExceptionHandler(catchOffset)));
+        break;
+      }
+      // Handle entering a catch block, possibly populating the caught exception
+      case OP_CATCH_START: {
+        ObjClass* expectedClass = AS_CLASS(peek(0)); // The expected class is on top of the stack
+        ObjException* exception = AS_EXCEPTION(peek(1)); // The thrown exception object
+
+        if (!instanceOf((ObjInstance*)exception, expectedClass)) {
+            // If it's not an instance of the expected class or a subclass, skip the catch block
+            int skipOffset = READ_SHORT();
+            frame->ip += skipOffset;
+        } else {
+            // It's the right type, enter the catch block
+            pop(); // Remove the class from the stack
+        }
+        break;
+    }
+      // Clean up after catch, run finally if present
+      case OP_FINALLY_START: {
+          // Prepare for finally execution
+          break;
+      }
+      // End of finally block, restore normal execution flow
+      case OP_FINALLY_END: {
+          break;
+      }
       case OP_CALL: {
         int argCount = READ_BYTE();
         if (!callValue(peek(argCount), argCount)) {
@@ -697,39 +788,6 @@ static InterpretResult run() {
       case OP_METHOD:
         defineMethod(READ_STRING());
         break;
-        case OP_TRY_START: {
-            int catchOffset = READ_SHORT();
-            push(OBJ_VAL(newExceptionHandler((int)(frame->ip - frame->closure->function->chunk.code) + catchOffset)));
-            break;
-        }
-        case OP_THROW: {
-            Value error = pop(); // Get the thrown error object
-            // Unwind stack until an exception handler is found or the stack is empty
-            while (!IS_EXCEPTION_HANDLER(peek(0)) && vm.stackTop > vm.stack) {
-                pop();
-            }
-            if (vm.stackTop == vm.stack) {
-                runtimeError("Uncaught exception.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            ObjExceptionHandler* handler = AS_EXCEPTION_HANDLER(pop());
-            frame->ip = frame->closure->function->chunk.code + handler->catchAddress;
-            push(error);  // Put the error object back on the stack for the catch block
-            break;
-        }
-        case OP_CATCH_START: {
-            // Start of a catch block
-            break;
-        }
-        case OP_CATCH_END:
-        case OP_FINALLY_START: {
-            // Clean up after catch, prepare for finally
-            break;
-        }
-        case OP_FINALLY_END: {
-            // End of finally, restore normal execution flow
-            break;
-        }
     }
   }
 

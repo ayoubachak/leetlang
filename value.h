@@ -22,10 +22,14 @@ typedef uint64_t Value;
 #define IS_NUMBER(value)    (((value) & QNAN) != QNAN)
 #define IS_OBJ(value) \
     (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
+#define IS_EXCEPTION(value) (IS_OBJ(value) && AS_OBJ(value)->type == OBJ_EXCEPTION)
+
 #define AS_BOOL(value)      ((value) == TRUE_VAL)
 #define AS_NUMBER(value)    valueToNum(value)
 #define AS_OBJ(value) \
     ((Obj*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
+#define AS_EXCEPTION(value) ((ObjException*)AS_OBJ(value))  
+
 #define BOOL_VAL(b)     ((b) ? TRUE_VAL : FALSE_VAL)
 #define FALSE_VAL       ((Value)(uint64_t)(QNAN | TAG_FALSE))
 #define TRUE_VAL        ((Value)(uint64_t)(QNAN | TAG_TRUE))
@@ -33,6 +37,8 @@ typedef uint64_t Value;
 #define NUMBER_VAL(num) numToValue(num)
 #define OBJ_VAL(obj) \
     (Value)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
+#define EXCEPTION_VAL(exception) OBJ_VAL(exception)
+
 
 static inline double valueToNum(Value value) {
   double num;

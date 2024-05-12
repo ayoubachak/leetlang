@@ -50,14 +50,20 @@ ObjBoundMethod* newBoundMethod(Value receiver,
 
 
 ObjClass* newClass(ObjString* name) {
-  ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
-  klass->name = name; // [klass]
-
-  initTable(&klass->methods);
-
-  return klass;
+    ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+    klass->name = name;
+    initTable(&klass->methods);
+    klass->superclassCount = 0;
+    klass->superclasses = NULL;  // No superclasses initially
+    return klass;
 }
 
+void classAddSuperclass(ObjClass* klass, ObjClass* superclass) {
+    klass->superclassCount++;
+    klass->superclasses = GROW_ARRAY(ObjClass*, klass->superclasses, klass->superclassCount - 1, klass->superclassCount);
+    klass->superclasses[klass->superclassCount - 1] = superclass;
+    tableAddAll(&superclass->methods, &klass->methods);  // Inherit methods
+}
 
 ObjClosure* newClosure(ObjFunction* function) {
 
@@ -104,7 +110,11 @@ ObjNative* newNative(NativeFn function) {
   return native;
 }
 
-
+ObjException* newException(ObjString* message) {
+    ObjException* exception = ALLOCATE_OBJ(ObjException, OBJ_EXCEPTION);
+    exception->message = message;
+    return exception;
+}
 /* Strings allocate-string < Hash Tables allocate-string
 static ObjString* allocateString(char* chars, int length) {
 */
@@ -116,20 +126,10 @@ static ObjString* allocateString(char* chars, int length,
   ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
   string->length = length;
   string->chars = chars;
-
   string->hash = hash;
-
-
-
-
   push(OBJ_VAL(string));
-
   tableSet(&vm.strings, string, NIL_VAL);
-
   pop();
-
-
-
   return string;
 }
 

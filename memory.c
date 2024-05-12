@@ -1,61 +1,40 @@
 // memory.c
 
 #include <stdlib.h>
-
 #include "compiler.h"
-
 #include "memory.h"
-
 #include "vm.h"
-
-
 
 #ifdef DEBUG_LOG_GC
 #include <stdio.h>
 #include "debug.h"
 #endif
 
-
-
 #define GC_HEAP_GROW_FACTOR 2
 
-
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
-
   vm.bytesAllocated += newSize - oldSize;
-
-
   if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
     collectGarbage();
 #endif
-
-
     if (vm.bytesAllocated > vm.nextGC) {
       collectGarbage();
     }
-
   }
-
 
   if (newSize == 0) {
     free(pointer);
     return NULL;
   }
-
   void* result = realloc(pointer, newSize);
-
   if (result == NULL) exit(1);
-
   return result;
 }
 
 void markObject(Obj* object) {
   if (object == NULL) return;
-
   if (object->isMarked) return;
-
-
 
 #ifdef DEBUG_LOG_GC
   printf("%p mark ", (void*)object);
@@ -63,22 +42,16 @@ void markObject(Obj* object) {
   printf("\n");
 #endif
 
-
   object->isMarked = true;
-
 
   if (vm.grayCapacity < vm.grayCount + 1) {
     vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
     vm.grayStack = (Obj**)realloc(vm.grayStack,
                                   sizeof(Obj*) * vm.grayCapacity);
 
-
     if (vm.grayStack == NULL) exit(1);
-
   }
-
   vm.grayStack[vm.grayCount++] = object;
-
 }
 
 
@@ -86,33 +59,26 @@ void markValue(Value value) {
   if (IS_OBJ(value)) markObject(AS_OBJ(value));
 }
 
-
 static void markArray(ValueArray* array) {
   for (int i = 0; i < array->count; i++) {
     markValue(array->values[i]);
   }
 }
 
-
 static void blackenObject(Obj* object) {
-
 #ifdef DEBUG_LOG_GC
   printf("%p blacken ", (void*)object);
   printValue(OBJ_VAL(object));
   printf("\n");
 #endif
 
-
   switch (object->type) {
-
     case OBJ_BOUND_METHOD: {
       ObjBoundMethod* bound = (ObjBoundMethod*)object;
       markValue(bound->receiver);
       markObject((Obj*)bound->method);
       break;
     }
-
-
     case OBJ_CLASS: {
       ObjClass* klass = (ObjClass*)object;
       markObject((Obj*)klass->name);
