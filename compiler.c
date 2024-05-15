@@ -924,20 +924,6 @@ static void throwStatement() {
     emitByte(OP_THROW);
 }
 
-static void tryCatchFinallyStatement() {
-    int tryJump = emitJump(OP_TRY_START);
-    // Compile try block
-    patchJump(tryJump);
-
-    int catchJump = emitJump(OP_CATCH_START);
-    // Compile catch block
-    patchJump(catchJump);
-
-    emitJump(OP_FINALLY_START);
-    // Compile finally block
-    emitByte(OP_END_TRY_CATCH_FINALLY);
-}
-
 static void printStatement() {
   expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after value.");

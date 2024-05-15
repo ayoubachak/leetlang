@@ -159,6 +159,60 @@ static Value assertNative(int argCount, Value* args) {
     return BOOL_VAL(true);
 }
 
+static Value typeNative(int argCount, Value* args) {
+    if (argCount != 1) {
+        runtimeError("typeNative takes one argument: the value to check the type of.");
+        return NIL_VAL;
+    }
+
+    Value value = args[0];
+
+    if (IS_BOOL(value)) {
+        return OBJ_VAL(copyString("boolean", 7));
+    } else if (IS_NUMBER(value)) {
+        return OBJ_VAL(copyString("number", 6));
+    } else if (IS_ARRAY(value)){
+        return OBJ_VAL(copyString("array", 5));
+    } else if (IS_OBJ(value)) {
+        switch (OBJ_TYPE(value)) {
+            case OBJ_BOUND_METHOD: return OBJ_VAL(copyString("bound method", 12));
+            case OBJ_CLASS: return OBJ_VAL(copyString("class", 5));
+            case OBJ_CLOSURE: return OBJ_VAL(copyString("closure", 7));
+            case OBJ_FUNCTION: return OBJ_VAL(copyString("function", 8));
+            case OBJ_INSTANCE: return OBJ_VAL(copyString("instance", 8));
+            case OBJ_NATIVE: return OBJ_VAL(copyString("native", 6));
+            case OBJ_STRING: return OBJ_VAL(copyString("string", 6));
+            case OBJ_UPVALUE: return OBJ_VAL(copyString("upvalue", 7));
+            case OBJ_EXCEPTION_HANDLER: return OBJ_VAL(copyString("exception handler", 17));
+            default: return OBJ_VAL(copyString("unknown", 7));
+        }
+    } else {
+        return OBJ_VAL(copyString("unknown", 7));
+    }
+}
+
+static Value isinstanceNative(int argCount, Value* args) {
+    if (argCount != 2) {
+        runtimeError("isinstanceNative takes two arguments: the instance and the class.");
+        return NIL_VAL;
+    }
+
+    if (!IS_INSTANCE(args[0])) {
+        runtimeError("First argument must be an instance.");
+        return NIL_VAL;
+    }
+
+    if (!IS_CLASS(args[1])) {
+        runtimeError("Second argument must be a class.");
+        return NIL_VAL;
+    }
+
+    ObjInstance* instance = AS_INSTANCE(args[0]);
+    ObjClass* klass = AS_CLASS(args[1]);
+
+    return BOOL_VAL(instanceOf(instance, klass));
+}
+
 static Value printNative(int argCount, Value* args) {
     for (int i = 0; i < argCount; i++) {
         printValue(args[i]);
@@ -177,41 +231,22 @@ static void defineNative(const char* name, NativeFn function) {
 
 
 void initVM() {
-
   resetStack();
-
-
   vm.objects = NULL;
-
-
   vm.bytesAllocated = 0;
   vm.nextGC = 1024 * 1024;
-
-
-
   vm.grayCount = 0;
   vm.grayCapacity = 0;
   vm.grayStack = NULL;
-
-
-
   initTable(&vm.globals);
-
-
   initTable(&vm.strings);
-
-
-
-
   vm.initString = NULL;
-
   vm.initString = copyString("init", 4);
-
-
 
   defineNative("clock", clockNative);
   defineNative("assert", assertNative);
-
+  defineNative("type", typeNative);
+  defineNative("isinstance", isinstanceNative);
 }
 
 void freeVM() {
@@ -783,39 +818,6 @@ static InterpretResult run() {
       case OP_METHOD:
         defineMethod(READ_STRING());
         break;
-      case OP_TRY_START: {
-          int catchOffset = READ_SHORT();
-          push(OBJ_VAL(newExceptionHandler((int)(frame->ip - frame->closure->function->chunk.code) + catchOffset)));
-          break;
-      }
-      case OP_THROW: {
-          Value error = pop(); // Get the thrown error object
-          // Unwind stack until an exception handler is found or the stack is empty
-          while (!IS_EXCEPTION_HANDLER(peek(0)) && vm.stackTop > vm.stack) {
-              pop();
-          }
-          if (vm.stackTop == vm.stack) {
-              runtimeError("Uncaught exception.");
-              return INTERPRET_RUNTIME_ERROR;
-          }
-          ObjExceptionHandler* handler = AS_EXCEPTION_HANDLER(pop());
-          frame->ip = frame->closure->function->chunk.code + handler->catchAddress;
-          push(error);  // Put the error object back on the stack for the catch block
-          break;
-      }
-      case OP_CATCH_START: {
-          // Start of a catch block
-          break;
-      }
-      case OP_CATCH_END:
-      case OP_FINALLY_START: {
-          // Clean up after catch, prepare for finally
-          break;
-      }
-      case OP_FINALLY_END: {
-          // End of finally, restore normal execution flow
-          break;
-      }
       case OP_ARRAY: {
         int elementCount = READ_BYTE();
         ObjArray* array = newArray(elementCount);
