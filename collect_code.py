@@ -24,7 +24,7 @@ def concatenate_files(files, output_file):
 
 def main():
     directory = "."  # Replace with the directory you want to scan
-    include_patterns = ["*vm.c", "*vm.h", "*compiler.c", "*compiler.h", "*object.c", "*object.h"]  # Patterns to include
+    include_patterns = ["*.c", "*.h"]  # Patterns to include
     exclude_patterns = ["common.h", "debug.c", "debug.h"]  # Patterns to exclude
 
     files = scan_directory(directory, include_patterns, exclude_patterns)

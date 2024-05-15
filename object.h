@@ -13,7 +13,8 @@
 
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
-
+#define IS_ARRAY(value) isObjType(value, OBJ_ARRAY)
+#define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
 
 
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
@@ -49,7 +50,8 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_STRING,
     OBJ_UPVALUE,
-    OBJ_EXCEPTION_HANDLER
+    OBJ_EXCEPTION_HANDLER,
+    OBJ_ARRAY 
 } ObjType;
 
 
@@ -63,6 +65,11 @@ struct Obj {
 
 };
 
+typedef struct {
+  Obj obj;
+  int length;
+  Value* elements;
+} ObjArray;
 
 typedef struct {
   Obj obj;
@@ -146,6 +153,9 @@ typedef struct {
     Obj obj;
     int catchAddress;  // Address to jump to for the catch block
 } ObjExceptionHandler;
+
+ObjArray* newArray(int length);
+void sortArray(ObjArray* array);
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method);

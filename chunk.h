@@ -44,7 +44,12 @@ typedef enum {
   OP_CLASS,
   OP_INHERIT,
   OP_METHOD,
-  OP_TRY_START, OP_TRY_END, OP_THROW, OP_CATCH_START, OP_CATCH_END, OP_FINALLY_START, OP_FINALLY_END
+  OP_TRY_START, OP_TRY_END, OP_THROW, OP_CATCH_START, OP_CATCH_END, OP_FINALLY_START, OP_FINALLY_END,
+  OP_ARRAY,          // Array creation
+  OP_ARRAY_INDEX,    // Array indexing
+  OP_STRING_INDEX,   // String indexing
+  OP_INDEX,
+  OP_SORT,         // Sort array
 } OpCode;
 
 

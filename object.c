@@ -38,6 +38,28 @@ static Obj* allocateObject(size_t size, ObjType type) {
   return object;
 }
 
+ObjArray* newArray(int length) {
+  ObjArray* array = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
+  array->length = length;
+  array->elements = ALLOCATE(Value, length);
+  for (int i = 0; i < length; i++) {
+    array->elements[i] = NIL_VAL;
+  }
+  return array;
+}
+
+void sortArray(ObjArray* array) {
+  // Simple bubble sort for demonstration purposes
+  for (int i = 0; i < array->length - 1; i++) {
+    for (int j = 0; j < array->length - i - 1; j++) {
+      if (AS_NUMBER(array->elements[j]) > AS_NUMBER(array->elements[j + 1])) {
+        Value temp = array->elements[j];
+        array->elements[j] = array->elements[j + 1];
+        array->elements[j + 1] = temp;
+      }
+    }
+  }
+}
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method) {
@@ -223,6 +245,16 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
   switch (OBJ_TYPE(value)) {
+    case OBJ_ARRAY: {
+      ObjArray* array = AS_ARRAY(value);
+      printf("[");
+      for (int i = 0; i < array->length; i++) {
+        printValue(array->elements[i]);
+        if (i < array->length - 1) printf(", ");
+      }
+      printf("]");
+      break;
+    }
 
     case OBJ_BOUND_METHOD:
       printFunction(AS_BOUND_METHOD(value)->method->function);

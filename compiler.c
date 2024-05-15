@@ -108,6 +108,11 @@ static Chunk* currentChunk() {
 }
 */
 
+static void array(bool canAssign);
+static void arrayIndex(bool canAssign);
+static void stringIndex(bool canAssign);
+static void sortMethod(bool canAssign);
+
 static Chunk* currentChunk() {
   return &current->function->chunk;
 }
@@ -666,7 +671,44 @@ static void this_(bool canAssign) {
   variable(false);
 } // [this]
 
+static void array(bool canAssign) {
+  // Parse elements of the array and create a new array object
+  int elementCount = 0;
+  do {
+    if (check(TOKEN_RIGHT_BRACKET)) break;
+    expression();
+    elementCount++;
+  } while (match(TOKEN_COMMA));
 
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after array elements.");
+
+  // Emit the OP_ARRAY opcode with the number of elements
+  emitBytes(OP_ARRAY, elementCount);
+}
+
+// Implement array indexing parsing
+static void arrayIndex(bool canAssign) {
+  // Ensure this is an array type and parse the index
+  expression();
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after array index.");
+  emitByte(OP_INDEX);
+}
+
+// Implement string indexing parsing
+static void stringIndex(bool canAssign) {
+  // Ensure this is a string type and parse the index
+  expression();
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after string index.");
+  emitByte(OP_STRING_INDEX);
+}
+
+// Implement sort method parsing
+static void sortMethod(bool canAssign) {
+  // Ensure the sort method is being called correctly
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'sort'.");
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after 'sort'.");
+  emitByte(OP_SORT);
+}
 
 
 /* Compiling Expressions unary < Global Variables unary
@@ -695,7 +737,9 @@ ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, // [big]
+  [TOKEN_LEFT_BRACKET] = {array, arrayIndex, PREC_CALL}, // [
   [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE}, // ]
   [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
 /* Compiling Expressions rules < Classes and Instances table-dot
   [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
@@ -735,7 +779,7 @@ ParseRule rules[] = {
 /* Compiling Expressions rules < Strings table-string
   [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
 */
-  [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+  [TOKEN_STRING] = {string, stringIndex, PREC_CALL}, // string
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
 /* Compiling Expressions rules < Jumping Back and Forth table-and
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},

@@ -5,24 +5,24 @@ class A {
 }
 
 
-class B(A){ // we should also have access to this syntax ```class B(A){}```
+class B < A{ // we should also have access to this syntax ```class B(A){}```
     greet(){
         print "hello from B";
-        super(A).greet();
+        super.greet();
     }
 }
 
-class C(A){
+class C < A{
     greet(){
         print "hello from C";
-        super(A).greet();
+        super.greet();
     }
 }
 
-class D(C){
+class D < C{
     greet(){
         print "hello from D";
-        super(C).greet();
+        super.greet();
     }
 }
 var b = B();
