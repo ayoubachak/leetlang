@@ -38,6 +38,28 @@ static Obj* allocateObject(size_t size, ObjType type) {
   return object;
 }
 
+ObjArray* newArray(int length) {
+  ObjArray* array = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
+  array->length = length;
+  array->elements = ALLOCATE(Value, length);
+  for (int i = 0; i < length; i++) {
+    array->elements[i] = NIL_VAL;
+  }
+  return array;
+}
+
+void sortArray(ObjArray* array) {
+  // Simple bubble sort for demonstration purposes
+  for (int i = 0; i < array->length - 1; i++) {
+    for (int j = 0; j < array->length - i - 1; j++) {
+      if (AS_NUMBER(array->elements[j]) > AS_NUMBER(array->elements[j + 1])) {
+        Value temp = array->elements[j];
+        array->elements[j] = array->elements[j + 1];
+        array->elements[j + 1] = temp;
+      }
+    }
+  }
+}
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method) {
@@ -110,16 +132,6 @@ ObjNative* newNative(NativeFn function) {
   return native;
 }
 
-ObjException* newException(ObjString* message) {
-    ObjException* exception = ALLOCATE_OBJ(ObjException, OBJ_EXCEPTION);
-    exception->message = message;
-    return exception;
-}
-/* Strings allocate-string < Hash Tables allocate-string
-static ObjString* allocateString(char* chars, int length) {
-*/
-
-
 static ObjString* allocateString(char* chars, int length,
                                  uint32_t hash) {
 
@@ -145,9 +157,6 @@ static uint32_t hashString(const char* key, int length) {
 
 
 ObjString* takeString(char* chars, int length) {
-/* Strings take-string < Hash Tables take-string-hash
-  return allocateString(chars, length);
-*/
 
   uint32_t hash = hashString(chars, length);
 
@@ -176,9 +185,6 @@ ObjString* copyString(const char* chars, int length) {
   char* heapChars = ALLOCATE(char, length + 1);
   memcpy(heapChars, chars, length);
   heapChars[length] = '\0';
-/* Strings object-c < Hash Tables copy-string-allocate
-  return allocateString(heapChars, length);
-*/
 
   return allocateString(heapChars, length, hash);
 
@@ -223,6 +229,16 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
   switch (OBJ_TYPE(value)) {
+    case OBJ_ARRAY: {
+      ObjArray* array = AS_ARRAY(value);
+      printf("[");
+      for (int i = 0; i < array->length; i++) {
+        printValue(array->elements[i]);
+        if (i < array->length - 1) printf(", ");
+      }
+      printf("]");
+      break;
+    }
 
     case OBJ_BOUND_METHOD:
       printFunction(AS_BOUND_METHOD(value)->method->function);

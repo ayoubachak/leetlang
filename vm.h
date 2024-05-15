@@ -26,58 +26,27 @@
 
 
 typedef struct {
-/* Calls and Functions call-frame < Closures call-frame-closure
-  ObjFunction* function;
-*/
-
   ObjClosure* closure;
-
   uint8_t* ip;
   Value* slots;
 } CallFrame;
 
 
 typedef struct {
-/* A Virtual Machine vm-h < Calls and Functions frame-array
-  Chunk* chunk;
-*/
-/* A Virtual Machine ip < Calls and Functions frame-array
-  uint8_t* ip;
-*/
-
   CallFrame frames[FRAMES_MAX];
   int frameCount;
-  
-
-
   Value stack[STACK_MAX];
   Value* stackTop;
-
-
   Table globals;
-
-
   Table strings;
-
-
   ObjString* initString;
-
-
   ObjUpvalue* openUpvalues;
-
-
-
   size_t bytesAllocated;
   size_t nextGC;
-
-
   Obj* objects;
-
-
   int grayCount;
   int grayCapacity;
   Obj** grayStack;
-
 } VM;
 
 
@@ -94,9 +63,6 @@ extern VM vm;
 
 void initVM();
 void freeVM();
-/* A Virtual Machine interpret-h < Scanning on Demand vm-interpret-h
-InterpretResult interpret(Chunk* chunk);
-*/
 
 InterpretResult interpret(const char* source);
 

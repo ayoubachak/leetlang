@@ -44,15 +44,13 @@ typedef enum {
   OP_CLASS,
   OP_INHERIT,
   OP_METHOD,
-  // Exception handling
-  OP_TRY_START, 
-  OP_TRY_END, 
-  OP_THROW, 
-  OP_CATCH_START, 
-  OP_CATCH_END, 
-  OP_FINALLY_START, 
-  OP_FINALLY_END,
-  OP_END_TRY_CATCH_FINALLY
+  OP_TRY_START, OP_TRY_END, OP_THROW, OP_CATCH_START, OP_CATCH_END, OP_FINALLY_START, OP_FINALLY_END,
+  OP_ARRAY,          // Array creation
+  OP_ARRAY_INDEX,    // Array indexing
+  OP_STRING_INDEX,   // String indexing
+  OP_INDEX,
+  OP_SET_INDEX,      // Set index
+  OP_SORT,         // Sort array
 } OpCode;
 
 
@@ -70,9 +68,6 @@ void initChunk(Chunk* chunk);
 
 void freeChunk(Chunk* chunk);
 
-/* Chunks of Bytecode write-chunk-h < Chunks of Bytecode write-chunk-with-line-h
-void writeChunk(Chunk* chunk, uint8_t byte);
-*/
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 
 int addConstant(Chunk* chunk, Value value);

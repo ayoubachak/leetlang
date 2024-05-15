@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 ## chunk.c :
+=======
+# Code
+## chunk.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // chunk.c
 
@@ -21,9 +26,12 @@ void freeChunk(Chunk* chunk) {
   freeValueArray(&chunk->constants);
   initChunk(chunk);
 }
+<<<<<<< HEAD
 /* Chunks of Bytecode write-chunk < Chunks of Bytecode write-chunk-with-line
 void writeChunk(Chunk* chunk, uint8_t byte) {
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 void writeChunk(Chunk* chunk, uint8_t byte, int line) {
   if (chunk->capacity < chunk->count + 1) {
     int oldCapacity = chunk->capacity;
@@ -47,8 +55,12 @@ int addConstant(Chunk* chunk, Value value) {
 }
 
 ```
+<<<<<<< HEAD
 
 ## chunk.h :
+=======
+## chunk.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // chunk.h
 #ifndef leetlang_chunk_h
@@ -96,6 +108,7 @@ typedef enum {
   OP_CLASS,
   OP_INHERIT,
   OP_METHOD,
+<<<<<<< HEAD
   // Exception handling
   OP_TRY_START, 
   OP_TRY_END, 
@@ -105,6 +118,14 @@ typedef enum {
   OP_FINALLY_START, 
   OP_FINALLY_END,
   OP_END_TRY_CATCH_FINALLY
+=======
+  OP_TRY_START, OP_TRY_END, OP_THROW, OP_CATCH_START, OP_CATCH_END, OP_FINALLY_START, OP_FINALLY_END,
+  OP_ARRAY,          // Array creation
+  OP_ARRAY_INDEX,    // Array indexing
+  OP_STRING_INDEX,   // String indexing
+  OP_INDEX,
+  OP_SORT,         // Sort array
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 } OpCode;
 
 
@@ -122,17 +143,50 @@ void initChunk(Chunk* chunk);
 
 void freeChunk(Chunk* chunk);
 
+<<<<<<< HEAD
 /* Chunks of Bytecode write-chunk-h < Chunks of Bytecode write-chunk-with-line-h
 void writeChunk(Chunk* chunk, uint8_t byte);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 
 int addConstant(Chunk* chunk, Value value);
 
 #endif
 ```
+<<<<<<< HEAD
 
 ## compiler.c :
+=======
+## common.h
+```
+// common.h
+#ifndef leetlang_common_h
+#define leetlang_common_h
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+
+#define NAN_BOXING
+#define DEBUG_PRINT_CODE
+#define DEBUG_TRACE_EXECUTION
+#define DEBUG_STRESS_GC
+#define DEBUG_LOG_GC
+#define UINT8_COUNT (UINT8_MAX + 1)
+
+#endif
+
+#undef DEBUG_PRINT_CODE
+#undef DEBUG_TRACE_EXECUTION
+#undef DEBUG_STRESS_GC
+#undef DEBUG_LOG_GC
+
+
+```
+## compiler.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // compiler.c
 
@@ -173,10 +227,13 @@ typedef enum {
 } Precedence;
 
 
+<<<<<<< HEAD
 /* Compiling Expressions parse-fn-type < Global Variables parse-fn-type
 typedef void (*ParseFn)();
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 typedef void (*ParseFn)(bool canAssign);
 
 typedef struct {
@@ -186,7 +243,10 @@ typedef struct {
 } ParseRule;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 typedef struct {
   Token name;
   int depth;
@@ -208,10 +268,13 @@ typedef enum {
 } FunctionType;
 
 
+<<<<<<< HEAD
 /* Local Variables compiler-struct < Calls and Functions enclosing-field
 typedef struct {
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 typedef struct Compiler {
   struct Compiler* enclosing;
   ObjFunction* function;
@@ -236,6 +299,7 @@ Compiler* current = NULL;
 
 ClassCompiler* currentClass = NULL;
 
+<<<<<<< HEAD
 /* Compiling Expressions compiling-chunk < Calls and Functions current-chunk
 Chunk* compilingChunk;
 
@@ -243,6 +307,13 @@ static Chunk* currentChunk() {
   return compilingChunk;
 }
 */
+=======
+
+static void array(bool canAssign);
+static void arrayIndex(bool canAssign);
+static void stringIndex(bool canAssign);
+static void sortMethod(bool canAssign);
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 static Chunk* currentChunk() {
   return &current->function->chunk;
@@ -323,9 +394,12 @@ static int emitJump(uint8_t instruction) {
 }
 
 static void emitReturn() {
+<<<<<<< HEAD
 /* Calls and Functions return-nil < Methods and Initializers return-this
   emitByte(OP_NIL);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (current->type == TYPE_INITIALIZER) {
     emitBytes(OP_GET_LOCAL, 0);
   } else {
@@ -360,6 +434,7 @@ void writeConstant(Chunk* chunk, Value value, int line) {
 
 static void emitConstant(Value value) {
     emitBytes(OP_CONSTANT, makeConstant(value));
+<<<<<<< HEAD
     // this implementation slowed down the process too much 
     /*
     int index = makeConstant(value);
@@ -369,6 +444,8 @@ static void emitConstant(Value value) {
         writeConstant(currentChunk(), value, parser.previous.line);
     }
     */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 }
 
 static void patchJump(int offset) {
@@ -381,9 +458,12 @@ static void patchJump(int offset) {
   currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
+<<<<<<< HEAD
 /* Local Variables init-compiler < Calls and Functions init-compiler
 static void initCompiler(Compiler* compiler) {
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 static void initCompiler(Compiler* compiler, FunctionType type) {
   compiler->enclosing = current;
@@ -400,10 +480,14 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
   Local* local = &current->locals[current->localCount++];
   local->depth = 0;
   local->isCaptured = false;
+<<<<<<< HEAD
 /* Calls and Functions init-function-slot < Methods and Initializers slot-zero
   local->name.start = "";
   local->name.length = 0;
 */
+=======
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (type != TYPE_FUNCTION) {
     local->name.start = "this";
     local->name.length = 4;
@@ -414,19 +498,26 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
 }
 
 
+<<<<<<< HEAD
 /* Compiling Expressions end-compiler < Calls and Functions end-compiler
 static void endCompiler() {
 */
+=======
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 static ObjFunction* endCompiler() {
   emitReturn();
   ObjFunction* function = current->function;
 #ifdef DEBUG_PRINT_CODE
   if (!parser.hadError) {
+<<<<<<< HEAD
 /* Compiling Expressions dump-chunk < Calls and Functions disassemble-end
     disassembleChunk(currentChunk(), "code");
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     disassembleChunk(currentChunk(), function->name != NULL
         ? function->name->chars : "<script>");
   }
@@ -445,9 +536,12 @@ static void endScope() {
   while (current->localCount > 0 &&
          current->locals[current->localCount - 1].depth >
             current->scopeDepth) {
+<<<<<<< HEAD
 /* Local Variables pop-locals < Closures end-scope
     emitByte(OP_POP);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     if (current->locals[current->localCount - 1].isCaptured) {
       emitByte(OP_CLOSE_UPVALUE);
     } else {
@@ -536,9 +630,12 @@ static void addLocal(Token name) {
 
   Local* local = &current->locals[current->localCount++];
   local->name = name;
+<<<<<<< HEAD
 /* Local Variables add-local < Local Variables declare-undefined
   local->depth = current->scopeDepth;
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   local->depth = -1;
   local->isCaptured = false;
 
@@ -608,11 +705,14 @@ static void and_(bool canAssign) {
   patchJump(endJump);
 }
 
+<<<<<<< HEAD
 
 /* Compiling Expressions binary < Global Variables binary
 static void binary() {
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void binary(bool canAssign) {
   TokenType operatorType = parser.previous.type;
   ParseRule* rule = getRule(operatorType);
@@ -654,11 +754,14 @@ static void dot(bool canAssign) {
   }
 }
 
+<<<<<<< HEAD
 
 /* Types of Values parse-literal < Global Variables parse-literal
 static void literal() {
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void literal(bool canAssign) {
   switch (parser.previous.type) {
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
@@ -668,16 +771,20 @@ static void literal(bool canAssign) {
   }
 }
 
+<<<<<<< HEAD
 
 /* Compiling Expressions grouping < Global Variables grouping
 static void grouping() {
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void grouping(bool canAssign) {
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
+<<<<<<< HEAD
 /* Compiling Expressions number < Global Variables number
 static void number() {
 */
@@ -688,6 +795,10 @@ static void number(bool canAssign) {
 /* Compiling Expressions number < Types of Values const-number-val
   emitConstant(value);
 */
+=======
+static void number(bool canAssign) {
+  double value = strtod(parser.previous.start, NULL);
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   emitConstant(NUMBER_VAL(value));
 }
 
@@ -700,14 +811,18 @@ static void or_(bool canAssign) {
   patchJump(endJump);
 }
 
+<<<<<<< HEAD
 /* Strings parse-string < Global Variables string
 static void string() {
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void string(bool canAssign) {
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
                                   parser.previous.length - 2)));
 }
 
+<<<<<<< HEAD
 /* Global Variables read-named-variable < Global Variables named-variable-signature
 static void namedVariable(Token name) {
 */
@@ -715,6 +830,9 @@ static void namedVariable(Token name, bool canAssign) {
 /* Global Variables read-named-variable < Local Variables named-local
   uint8_t arg = identifierConstant(&name);
 */
+=======
+static void namedVariable(Token name, bool canAssign) {
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   uint8_t getOp, setOp;
   int arg = resolveLocal(current, &name);
   if (arg != -1) {
@@ -728,6 +846,7 @@ static void namedVariable(Token name, bool canAssign) {
     getOp = OP_GET_GLOBAL;
     setOp = OP_SET_GLOBAL;
   }
+<<<<<<< HEAD
 /* Global Variables read-named-variable < Global Variables named-variable
   emitBytes(OP_GET_GLOBAL, arg);
 */
@@ -744,15 +863,24 @@ static void namedVariable(Token name, bool canAssign) {
 /* Global Variables named-variable < Local Variables emit-get
     emitBytes(OP_GET_GLOBAL, arg);
 */
+=======
+  if (canAssign && match(TOKEN_EQUAL)) {
+    expression();
+    emitBytes(setOp, (uint8_t)arg);
+  } else {
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     emitBytes(getOp, (uint8_t)arg);
   }
 }
 
+<<<<<<< HEAD
 /* Global Variables variable-without-assign < Global Variables variable
 static void variable() {
   namedVariable(parser.previous);
 }
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void variable(bool canAssign) {
   namedVariable(parser.previous, canAssign);
 }
@@ -775,6 +903,7 @@ static void super_(bool canAssign) {
   consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
   uint8_t name = identifierConstant(&parser.previous);
 
+<<<<<<< HEAD
   
   namedVariable(syntheticToken("this"), false);
 /* Superclasses super-get < Superclasses super-invoke
@@ -789,6 +918,16 @@ static void super_(bool canAssign) {
     emitByte(argCount);
   } else {
     // namedVariable(syntheticToken("super"), false);
+=======
+  namedVariable(syntheticToken("this"), false);
+  if (match(TOKEN_LEFT_PAREN)) {
+    uint8_t argCount = argumentList();
+    namedVariable(syntheticToken("super"), false);
+    emitBytes(OP_SUPER_INVOKE, name);
+    emitByte(argCount);
+  } else {
+    namedVariable(syntheticToken("super"), false);
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     emitBytes(OP_GET_SUPER, name);
   }
 }
@@ -802,6 +941,7 @@ static void this_(bool canAssign) {
   variable(false);
 } // [this]
 
+<<<<<<< HEAD
 
 
 
@@ -814,6 +954,50 @@ static void unary(bool canAssign) {
 /* Compiling Expressions unary < Compiling Expressions unary-operand
   expression();
 */
+=======
+static void array(bool canAssign) {
+  // Parse elements of the array and create a new array object
+  int elementCount = 0;
+  do {
+    if (check(TOKEN_RIGHT_BRACKET)) break;
+    expression();
+    elementCount++;
+  } while (match(TOKEN_COMMA));
+
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after array elements.");
+
+  // Emit the OP_ARRAY opcode with the number of elements
+  emitBytes(OP_ARRAY, elementCount);
+}
+
+// Implement array indexing parsing
+static void arrayIndex(bool canAssign) {
+  // Ensure this is an array type and parse the index
+  expression();
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after array index.");
+  emitByte(OP_INDEX);
+}
+
+// Implement string indexing parsing
+static void stringIndex(bool canAssign) {
+  // Ensure this is a string type and parse the index
+  expression();
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after string index.");
+  emitByte(OP_STRING_INDEX);
+}
+
+// Implement sort method parsing
+static void sortMethod(bool canAssign) {
+  // Ensure the sort method is being called correctly
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'sort'.");
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after 'sort'.");
+  emitByte(OP_SORT);
+}
+
+static void unary(bool canAssign) {
+  TokenType operatorType = parser.previous.type;
+  // Compile the operand.
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   parsePrecedence(PREC_UNARY);
   // Emit the operator instruction.
   switch (operatorType) {
@@ -825,6 +1009,7 @@ static void unary(bool canAssign) {
 }
 
 ParseRule rules[] = {
+<<<<<<< HEAD
 /* Compiling Expressions rules < Calls and Functions infix-left-paren
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
 */
@@ -836,12 +1021,22 @@ ParseRule rules[] = {
 /* Compiling Expressions rules < Classes and Instances table-dot
   [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
 */
+=======
+  [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
+  [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, // [big]
+  [TOKEN_LEFT_BRACKET] = {array, arrayIndex, PREC_CALL}, // [
+  [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE}, // ]
+  [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   [TOKEN_DOT]           = {NULL,     dot,    PREC_CALL},
   [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
   [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
   [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
   [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
+<<<<<<< HEAD
 /* Compiling Expressions rules < Types of Values table-not
   [TOKEN_BANG]          = {NULL,     NULL,   PREC_NONE},
 */
@@ -859,11 +1054,18 @@ ParseRule rules[] = {
   [TOKEN_LESS]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
 */
+=======
+  [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
+  [TOKEN_NOT]          = {unary,    NULL,   PREC_NONE},
+  [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
+  [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
   [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
+<<<<<<< HEAD
 /* Compiling Expressions rules < Global Variables table-identifier
   [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
 */
@@ -882,10 +1084,19 @@ ParseRule rules[] = {
 /* Compiling Expressions rules < Types of Values table-false
   [TOKEN_FALSE]         = {NULL,     NULL,   PREC_NONE},
 */
+=======
+  [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
+  [TOKEN_STRING] = {string, stringIndex, PREC_CALL}, // string
+  [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
+  [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
+  [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
+<<<<<<< HEAD
 /* Compiling Expressions rules < Types of Values table-nil
   [TOKEN_NIL]           = {NULL,     NULL,   PREC_NONE},
 */
@@ -907,6 +1118,14 @@ ParseRule rules[] = {
 /* Compiling Expressions rules < Types of Values table-true
   [TOKEN_TRUE]          = {NULL,     NULL,   PREC_NONE},
 */
+=======
+  [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
+  [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
+  [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
+  [TOKEN_THIS]          = {this_,    NULL,   PREC_NONE},
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
   [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
@@ -915,27 +1134,36 @@ ParseRule rules[] = {
 };
 
 static void parsePrecedence(Precedence precedence) {
+<<<<<<< HEAD
 /* Compiling Expressions parse-precedence < Compiling Expressions precedence-body
   // What goes here?
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   advance();
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == NULL) {
     error("Expect expression.");
     return;
   }
+<<<<<<< HEAD
 /* Compiling Expressions precedence-body < Global Variables prefix-rule
   prefixRule();
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   bool canAssign = precedence <= PREC_ASSIGNMENT;
   prefixRule(canAssign);
 
   while (precedence <= getRule(parser.current.type)->precedence) {
     advance();
     ParseFn infixRule = getRule(parser.previous.type)->infix;
+<<<<<<< HEAD
 /* Compiling Expressions infix < Global Variables infix-rule
     infixRule();
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     infixRule(canAssign);
   }
 
@@ -950,9 +1178,12 @@ static ParseRule* getRule(TokenType type) {
 }
 
 static void expression() {
+<<<<<<< HEAD
 /* Compiling Expressions expression < Compiling Expressions expression-body
   // What goes here?
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   parsePrecedence(PREC_ASSIGNMENT);
 }
 
@@ -963,23 +1194,38 @@ static void block() {
   }
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void tryStatement() {
     consume(TOKEN_TRY, "Expect 'try' before try block.");
     consume(TOKEN_LEFT_BRACE, "Expect '{' before try block body.");
     beginScope();
     block();
     endScope();
+<<<<<<< HEAD
     if (match(TOKEN_CATCH)) {
         consume(TOKEN_LEFT_PAREN, "Expect '(' after 'catch'.");
         consume(TOKEN_IDENTIFIER, "Expect identifier for exception.");
+=======
+
+    if (match(TOKEN_CATCH)) {
+        consume(TOKEN_LEFT_PAREN, "Expect '(' after 'catch'.");
+        // Assume catch block takes a single parameter, the exception.
+        consume(TOKEN_IDENTIFIER, "Expect identifier.");
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
         defineVariable(parseVariable("Expect variable name."));
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after catch parameters.");
         beginScope();
         block();
         endScope();
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     if (match(TOKEN_FINALLY)) {
         consume(TOKEN_LEFT_BRACE, "Expect '{' before finally block.");
         beginScope();
@@ -988,6 +1234,15 @@ static void tryStatement() {
     }
 }
 
+<<<<<<< HEAD
+=======
+static void throwStatement() {
+    consume(TOKEN_THROW, "Expect 'throw' before an expression.");
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after throw expression.");
+    emitByte(OP_THROW);
+}
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void function(FunctionType type) {
   Compiler compiler;
   initCompiler(&compiler, type);
@@ -1007,9 +1262,12 @@ static void function(FunctionType type) {
   consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
   block();
   ObjFunction* function = endCompiler();
+<<<<<<< HEAD
 /* Calls and Functions compile-function < Closures emit-closure
   emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
   for (int i = 0; i < function->upvalueCount; i++) {
     emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
@@ -1020,9 +1278,12 @@ static void function(FunctionType type) {
 static void method() {
   consume(TOKEN_IDENTIFIER, "Expect method name.");
   uint8_t constant = identifierConstant(&parser.previous);
+<<<<<<< HEAD
 /* Methods and Initializers method-body < Methods and Initializers method-type
   FunctionType type = TYPE_FUNCTION;
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   FunctionType type = TYPE_METHOD;
   if (parser.previous.length == 4 &&
       memcmp(parser.previous.start, "init", 4) == 0) {
@@ -1034,6 +1295,7 @@ static void method() {
 
 
 static void classDeclaration() {
+<<<<<<< HEAD
     consume(TOKEN_IDENTIFIER, "Expect class name.");
     Token className = parser.previous;
     uint8_t nameConstant = identifierConstant(&parser.previous);
@@ -1087,6 +1349,44 @@ static void classDeclaration() {
 }
 
 
+=======
+  consume(TOKEN_IDENTIFIER, "Expect class name.");
+  Token className = parser.previous;
+  uint8_t nameConstant = identifierConstant(&parser.previous);
+  declareVariable();
+  emitBytes(OP_CLASS, nameConstant);
+  defineVariable(nameConstant);
+  ClassCompiler classCompiler;
+  classCompiler.hasSuperclass = false;
+  classCompiler.enclosing = currentClass;
+  currentClass = &classCompiler;
+  if (match(TOKEN_LESS)) {
+    consume(TOKEN_IDENTIFIER, "Expect superclass name.");
+    variable(false);
+    if (identifiersEqual(&className, &parser.previous)) {
+      error("A class can't inherit from itself.");
+    }
+    beginScope();
+    addLocal(syntheticToken("super"));
+    defineVariable(0);
+    namedVariable(className, false);
+    emitByte(OP_INHERIT);
+    classCompiler.hasSuperclass = true;
+  }
+  namedVariable(className, false);
+  consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+  while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+    method();
+  }
+  consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+  emitByte(OP_POP);
+  if (classCompiler.hasSuperclass) {
+    endScope();
+  }
+  currentClass = currentClass->enclosing;
+}
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void funDeclaration() {
   uint8_t global = parseVariable("Expect function name.");
   markInitialized();
@@ -1116,9 +1416,12 @@ static void expressionStatement() {
 static void forStatement() {
   beginScope();
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+<<<<<<< HEAD
 /* Jumping Back and Forth for-statement < Jumping Back and Forth for-initializer
   consume(TOKEN_SEMICOLON, "Expect ';'.");
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (match(TOKEN_SEMICOLON)) {
     // No initializer.
   } else if (match(TOKEN_VAR)) {
@@ -1127,9 +1430,12 @@ static void forStatement() {
     expressionStatement();
   }
   int loopStart = currentChunk()->count;
+<<<<<<< HEAD
 /* Jumping Back and Forth for-statement < Jumping Back and Forth for-exit
   consume(TOKEN_SEMICOLON, "Expect ';'.");
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   int exitJump = -1;
   if (!match(TOKEN_SEMICOLON)) {
     expression();
@@ -1138,9 +1444,12 @@ static void forStatement() {
     exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP); // Condition.
   }
+<<<<<<< HEAD
 /* Jumping Back and Forth for-statement < Jumping Back and Forth for-increment
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (!match(TOKEN_RIGHT_PAREN)) {
     int bodyJump = emitJump(OP_JUMP);
     int incrementStart = currentChunk()->count;
@@ -1175,6 +1484,7 @@ static void ifStatement() {
   patchJump(elseJump);
 }
 
+<<<<<<< HEAD
 static void throwStatement() {
     consume(TOKEN_THROW, "Expect 'throw' before an expression.");
     expression();
@@ -1196,6 +1506,8 @@ static void tryCatchFinallyStatement() {
     emitByte(OP_END_TRY_CATCH_FINALLY);
 }
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void printStatement() {
   expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after value.");
@@ -1256,6 +1568,7 @@ static void synchronize() {
 static void declaration() {
   if (match(TOKEN_CLASS)) {
     classDeclaration();
+<<<<<<< HEAD
 /* Calls and Functions match-fun < Classes and Instances match-class
   if (match(TOKEN_FUN)) {
 */
@@ -1264,14 +1577,21 @@ static void declaration() {
 /* Global Variables match-var < Calls and Functions match-fun
   if (match(TOKEN_VAR)) {
 */
+=======
+  } else if (match(TOKEN_FUN)) {
+    funDeclaration();
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   } else if (match(TOKEN_VAR)) {
     varDeclaration();
   } else {
     statement();
   }
+<<<<<<< HEAD
 /* Global Variables declaration < Global Variables match-var
   statement();
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (parser.panicMode) synchronize();
 }
 
@@ -1286,8 +1606,11 @@ static void statement() {
     returnStatement();
   } else if (match(TOKEN_WHILE)) {
     whileStatement();
+<<<<<<< HEAD
   } else if (match(TOKEN_TRY)) {   // Add this line
     tryStatement();              // Call the function to handle try statements
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   } else if (match(TOKEN_LEFT_BRACE)) {
     beginScope();
     block();
@@ -1297,6 +1620,7 @@ static void statement() {
   }
 }
 
+<<<<<<< HEAD
 /* Scanning on Demand compiler-c < Compiling Expressions compile-signature
 void compile(const char* source) {
 */
@@ -1344,6 +1668,18 @@ ObjFunction* compile(const char* source) {
 /* Compiling Expressions return-had-error < Calls and Functions call-end-compiler
   return !parser.hadError;
 */
+=======
+ObjFunction* compile(const char* source) {
+  initScanner(source);
+  Compiler compiler;
+  initCompiler(&compiler, TYPE_SCRIPT);
+  parser.hadError = false;
+  parser.panicMode = false;
+  advance();
+  while (!match(TOKEN_EOF)) {
+    declaration();
+  }
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   ObjFunction* function = endCompiler();
   return parser.hadError ? NULL : function;
 }
@@ -1357,8 +1693,12 @@ void markCompilerRoots() {
 }
 
 ```
+<<<<<<< HEAD
 
 ## compiler.h :
+=======
+## compiler.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // compiler.h
 #ifndef leetlang_compiler_h
@@ -1366,12 +1706,15 @@ void markCompilerRoots() {
 
 #include "object.h"
 #include "vm.h"
+<<<<<<< HEAD
 /* Scanning on Demand compiler-h < Compiling Expressions compile-h
 void compile(const char* source);
 */
 /* Compiling Expressions compile-h < Calls and Functions compile-h
 bool compile(const char* source, Chunk* chunk);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 ObjFunction* compile(const char* source);
 
@@ -1381,63 +1724,484 @@ void markCompilerRoots();
 
 #endif
 ```
+<<<<<<< HEAD
 
 ## memory.c :
+=======
+## debug.c
+```
+// debug.c
+
+#include <stdio.h>
+
+#include "debug.h"
+
+#include "object.h"
+
+
+#include "value.h"
+
+
+void disassembleChunk(Chunk* chunk, const char* name) {
+  printf("== %s ==\n", name);
+  
+  for (int offset = 0; offset < chunk->count;) {
+    offset = disassembleInstruction(chunk, offset);
+  }
+}
+
+static int constantInstruction(const char* name, Chunk* chunk,
+                               int offset) {
+  uint8_t constant = chunk->code[offset + 1];
+  printf("%-16s %4d '", name, constant);
+  printValue(chunk->constants.values[constant]);
+  printf("'\n");
+
+  return offset + 2;
+
+}
+
+
+static int invokeInstruction(const char* name, Chunk* chunk,
+                                int offset) {
+  uint8_t constant = chunk->code[offset + 1];
+  uint8_t argCount = chunk->code[offset + 2];
+  printf("%-16s (%d args) %4d '", name, argCount, constant);
+  printValue(chunk->constants.values[constant]);
+  printf("'\n");
+  return offset + 3;
+}
+
+
+static int simpleInstruction(const char* name, int offset) {
+  printf("%s\n", name);
+  return offset + 1;
+}
+
+
+static int byteInstruction(const char* name, Chunk* chunk,
+                           int offset) {
+  uint8_t slot = chunk->code[offset + 1];
+  printf("%-16s %4d\n", name, slot);
+  return offset + 2; // [debug]
+}
+
+
+static int jumpInstruction(const char* name, int sign,
+                           Chunk* chunk, int offset) {
+  uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
+  jump |= chunk->code[offset + 2];
+  printf("%-16s %4d -> %d\n", name, offset,
+         offset + 3 + sign * jump);
+  return offset + 3;
+}
+
+
+int disassembleInstruction(Chunk* chunk, int offset) {
+  printf("%04d ", offset);
+
+  if (offset > 0 &&
+      chunk->lines[offset] == chunk->lines[offset - 1]) {
+    printf("   | ");
+  } else {
+    printf("%4d ", chunk->lines[offset]);
+  }
+
+  
+  uint8_t instruction = chunk->code[offset];
+  switch (instruction) {
+
+    case OP_CONSTANT:
+      return constantInstruction("OP_CONSTANT", chunk, offset);
+
+
+    case OP_NIL:
+      return simpleInstruction("OP_NIL", offset);
+    case OP_TRUE:
+      return simpleInstruction("OP_TRUE", offset);
+    case OP_FALSE:
+      return simpleInstruction("OP_FALSE", offset);
+
+
+    case OP_POP:
+      return simpleInstruction("OP_POP", offset);
+
+
+    case OP_GET_LOCAL:
+      return byteInstruction("OP_GET_LOCAL", chunk, offset);
+    case OP_SET_LOCAL:
+      return byteInstruction("OP_SET_LOCAL", chunk, offset);
+
+
+    case OP_GET_GLOBAL:
+      return constantInstruction("OP_GET_GLOBAL", chunk, offset);
+
+
+    case OP_DEFINE_GLOBAL:
+      return constantInstruction("OP_DEFINE_GLOBAL", chunk,
+                                 offset);
+
+
+    case OP_SET_GLOBAL:
+      return constantInstruction("OP_SET_GLOBAL", chunk, offset);
+
+
+    case OP_GET_UPVALUE:
+      return byteInstruction("OP_GET_UPVALUE", chunk, offset);
+    case OP_SET_UPVALUE:
+      return byteInstruction("OP_SET_UPVALUE", chunk, offset);
+
+
+    case OP_GET_PROPERTY:
+      return constantInstruction("OP_GET_PROPERTY", chunk, offset);
+    case OP_SET_PROPERTY:
+      return constantInstruction("OP_SET_PROPERTY", chunk, offset);
+
+
+    case OP_GET_SUPER:
+      return constantInstruction("OP_GET_SUPER", chunk, offset);
+
+
+    case OP_EQUAL:
+      return simpleInstruction("OP_EQUAL", offset);
+    case OP_GREATER:
+      return simpleInstruction("OP_GREATER", offset);
+    case OP_LESS:
+      return simpleInstruction("OP_LESS", offset);
+
+
+    case OP_ADD:
+      return simpleInstruction("OP_ADD", offset);
+    case OP_SUBTRACT:
+      return simpleInstruction("OP_SUBTRACT", offset);
+    case OP_MULTIPLY:
+      return simpleInstruction("OP_MULTIPLY", offset);
+    case OP_DIVIDE:
+      return simpleInstruction("OP_DIVIDE", offset);
+
+    case OP_NOT:
+      return simpleInstruction("OP_NOT", offset);
+
+
+
+    case OP_NEGATE:
+      return simpleInstruction("OP_NEGATE", offset);
+
+
+    case OP_PRINT:
+      return simpleInstruction("OP_PRINT", offset);
+
+
+    case OP_JUMP:
+      return jumpInstruction("OP_JUMP", 1, chunk, offset);
+    case OP_JUMP_IF_FALSE:
+      return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
+
+
+    case OP_LOOP:
+      return jumpInstruction("OP_LOOP", -1, chunk, offset);
+
+
+    case OP_CALL:
+      return byteInstruction("OP_CALL", chunk, offset);
+
+
+    case OP_INVOKE:
+      return invokeInstruction("OP_INVOKE", chunk, offset);
+
+
+    case OP_SUPER_INVOKE:
+      return invokeInstruction("OP_SUPER_INVOKE", chunk, offset);
+
+
+    case OP_CLOSURE: {
+      offset++;
+      uint8_t constant = chunk->code[offset++];
+      printf("%-16s %4d ", "OP_CLOSURE", constant);
+      printValue(chunk->constants.values[constant]);
+      printf("\n");
+
+
+      ObjFunction* function = AS_FUNCTION(
+          chunk->constants.values[constant]);
+      for (int j = 0; j < function->upvalueCount; j++) {
+        int isLocal = chunk->code[offset++];
+        int index = chunk->code[offset++];
+        printf("%04d      |                     %s %d\n",
+               offset - 2, isLocal ? "local" : "upvalue", index);
+      }
+      
+
+      return offset;
+    }
+
+
+    case OP_CLOSE_UPVALUE:
+      return simpleInstruction("OP_CLOSE_UPVALUE", offset);
+
+    case OP_RETURN:
+      return simpleInstruction("OP_RETURN", offset);
+
+    case OP_CLASS:
+      return constantInstruction("OP_CLASS", chunk, offset);
+
+
+    case OP_INHERIT:
+      return simpleInstruction("OP_INHERIT", offset);
+
+
+    case OP_METHOD:
+      return constantInstruction("OP_METHOD", chunk, offset);
+
+    default:
+      printf("Unknown opcode %d\n", instruction);
+      return offset + 1;
+  }
+}
+
+```
+## debug.h
+```
+// debug.h
+#ifndef leetlang_debug_h
+#define leetlang_debug_h
+
+
+#include "chunk.h"
+
+void disassembleChunk(Chunk* chunk, const char* name);
+int disassembleInstruction(Chunk* chunk, int offset);
+
+#endif
+```
+## main.c
+```
+// main.c
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#include "common.h"
+
+#include "chunk.h"
+
+
+#include "debug.h"
+
+
+#include "vm.h"
+
+
+
+static void repl() {
+  char line[1024];
+  for (;;) {
+    printf("> ");
+
+    if (!fgets(line, sizeof(line), stdin)) {
+      printf("\n");
+      break;
+    }
+
+    interpret(line);
+  }
+}
+
+
+static char* readFile(const char* path) {
+  FILE* file = fopen(path, "rb");
+
+  if (file == NULL) {
+    fprintf(stderr, "Could not open file \"%s\".\n", path);
+    exit(74);
+  }
+
+
+  fseek(file, 0L, SEEK_END);
+  size_t fileSize = ftell(file);
+  rewind(file);
+
+  char* buffer = (char*)malloc(fileSize + 1);
+
+  if (buffer == NULL) {
+    fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+    exit(74);
+  }
+  
+
+  size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
+
+  if (bytesRead < fileSize) {
+    fprintf(stderr, "Could not read file \"%s\".\n", path);
+    exit(74);
+  }
+  
+
+  buffer[bytesRead] = '\0';
+
+  fclose(file);
+  return buffer;
+}
+
+
+static void runFile(const char* path) {
+  char* source = readFile(path);
+  InterpretResult result = interpret(source);
+  free(source); // [owner]
+
+  if (result == INTERPRET_COMPILE_ERROR) exit(65);
+  if (result == INTERPRET_RUNTIME_ERROR) exit(70);
+}
+
+
+int main(int argc, const char* argv[]) {
+
+  initVM();
+
+  if (argc == 1) {
+    repl();
+  } else if (argc == 2) {
+    runFile(argv[1]);
+  } else {
+    fprintf(stderr, "Usage: clox [path]\n");
+    exit(64);
+  }
+  
+  freeVM();
+
+  return 0;
+}
+```
+## memory.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // memory.c
 
 #include <stdlib.h>
+<<<<<<< HEAD
 #include "compiler.h"
 #include "memory.h"
 #include "vm.h"
 
+=======
+
+#include "compiler.h"
+
+#include "memory.h"
+
+#include "vm.h"
+
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 #ifdef DEBUG_LOG_GC
 #include <stdio.h>
 #include "debug.h"
 #endif
 
+<<<<<<< HEAD
 #define GC_HEAP_GROW_FACTOR 2
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
   vm.bytesAllocated += newSize - oldSize;
+=======
+
+
+#define GC_HEAP_GROW_FACTOR 2
+
+
+void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+
+  vm.bytesAllocated += newSize - oldSize;
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
     collectGarbage();
 #endif
+<<<<<<< HEAD
     if (vm.bytesAllocated > vm.nextGC) {
       collectGarbage();
     }
   }
 
+=======
+
+
+    if (vm.bytesAllocated > vm.nextGC) {
+      collectGarbage();
+    }
+
+  }
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (newSize == 0) {
     free(pointer);
     return NULL;
   }
+<<<<<<< HEAD
   void* result = realloc(pointer, newSize);
   if (result == NULL) exit(1);
+=======
+
+  void* result = realloc(pointer, newSize);
+
+  if (result == NULL) exit(1);
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   return result;
 }
 
 void markObject(Obj* object) {
   if (object == NULL) return;
+<<<<<<< HEAD
   if (object->isMarked) return;
 
+=======
+
+  if (object->isMarked) return;
+
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 #ifdef DEBUG_LOG_GC
   printf("%p mark ", (void*)object);
   printValue(OBJ_VAL(object));
   printf("\n");
 #endif
 
+<<<<<<< HEAD
   object->isMarked = true;
 
+=======
+
+  object->isMarked = true;
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (vm.grayCapacity < vm.grayCount + 1) {
     vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
     vm.grayStack = (Obj**)realloc(vm.grayStack,
                                   sizeof(Obj*) * vm.grayCapacity);
 
+<<<<<<< HEAD
     if (vm.grayStack == NULL) exit(1);
   }
   vm.grayStack[vm.grayCount++] = object;
+=======
+
+    if (vm.grayStack == NULL) exit(1);
+
+  }
+
+  vm.grayStack[vm.grayCount++] = object;
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 }
 
 
@@ -1445,26 +2209,47 @@ void markValue(Value value) {
   if (IS_OBJ(value)) markObject(AS_OBJ(value));
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static void markArray(ValueArray* array) {
   for (int i = 0; i < array->count; i++) {
     markValue(array->values[i]);
   }
 }
 
+<<<<<<< HEAD
 static void blackenObject(Obj* object) {
+=======
+
+static void blackenObject(Obj* object) {
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 #ifdef DEBUG_LOG_GC
   printf("%p blacken ", (void*)object);
   printValue(OBJ_VAL(object));
   printf("\n");
 #endif
 
+<<<<<<< HEAD
   switch (object->type) {
+=======
+
+  switch (object->type) {
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     case OBJ_BOUND_METHOD: {
       ObjBoundMethod* bound = (ObjBoundMethod*)object;
       markValue(bound->receiver);
       markObject((Obj*)bound->method);
       break;
     }
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     case OBJ_CLASS: {
       ObjClass* klass = (ObjClass*)object;
       markObject((Obj*)klass->name);
@@ -1700,8 +2485,12 @@ void freeObjects() {
 }
 
 ```
+<<<<<<< HEAD
 
 ## memory.h :
+=======
+## memory.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // memory.h
 #ifndef leetlang_memory_h
@@ -1750,8 +2539,12 @@ void freeObjects();
 
 #endif
 ```
+<<<<<<< HEAD
 
 ## object.c :
+=======
+## object.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // object.c
 
@@ -1793,6 +2586,31 @@ static Obj* allocateObject(size_t size, ObjType type) {
   return object;
 }
 
+<<<<<<< HEAD
+=======
+ObjArray* newArray(int length) {
+  ObjArray* array = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
+  array->length = length;
+  array->elements = ALLOCATE(Value, length);
+  for (int i = 0; i < length; i++) {
+    array->elements[i] = NIL_VAL;
+  }
+  return array;
+}
+
+void sortArray(ObjArray* array) {
+  // Simple bubble sort for demonstration purposes
+  for (int i = 0; i < array->length - 1; i++) {
+    for (int j = 0; j < array->length - i - 1; j++) {
+      if (AS_NUMBER(array->elements[j]) > AS_NUMBER(array->elements[j + 1])) {
+        Value temp = array->elements[j];
+        array->elements[j] = array->elements[j + 1];
+        array->elements[j + 1] = temp;
+      }
+    }
+  }
+}
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method) {
@@ -1805,6 +2623,7 @@ ObjBoundMethod* newBoundMethod(Value receiver,
 
 
 ObjClass* newClass(ObjString* name) {
+<<<<<<< HEAD
     ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
     initTable(&klass->methods);
@@ -1819,6 +2638,16 @@ void classAddSuperclass(ObjClass* klass, ObjClass* superclass) {
     klass->superclasses[klass->superclassCount - 1] = superclass;
     tableAddAll(&superclass->methods, &klass->methods);  // Inherit methods
 }
+=======
+  ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+  klass->name = name; // [klass]
+
+  initTable(&klass->methods);
+
+  return klass;
+}
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 ObjClosure* newClosure(ObjFunction* function) {
 
@@ -1865,6 +2694,7 @@ ObjNative* newNative(NativeFn function) {
   return native;
 }
 
+<<<<<<< HEAD
 ObjException* newException(ObjString* message) {
     ObjException* exception = ALLOCATE_OBJ(ObjException, OBJ_EXCEPTION);
     exception->message = message;
@@ -1875,16 +2705,35 @@ static ObjString* allocateString(char* chars, int length) {
 */
 
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static ObjString* allocateString(char* chars, int length,
                                  uint32_t hash) {
 
   ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
   string->length = length;
   string->chars = chars;
+<<<<<<< HEAD
   string->hash = hash;
   push(OBJ_VAL(string));
   tableSet(&vm.strings, string, NIL_VAL);
   pop();
+=======
+
+  string->hash = hash;
+
+
+
+
+  push(OBJ_VAL(string));
+
+  tableSet(&vm.strings, string, NIL_VAL);
+
+  pop();
+
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   return string;
 }
 
@@ -1900,9 +2749,12 @@ static uint32_t hashString(const char* key, int length) {
 
 
 ObjString* takeString(char* chars, int length) {
+<<<<<<< HEAD
 /* Strings take-string < Hash Tables take-string-hash
   return allocateString(chars, length);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
   uint32_t hash = hashString(chars, length);
 
@@ -1931,9 +2783,12 @@ ObjString* copyString(const char* chars, int length) {
   char* heapChars = ALLOCATE(char, length + 1);
   memcpy(heapChars, chars, length);
   heapChars[length] = '\0';
+<<<<<<< HEAD
 /* Strings object-c < Hash Tables copy-string-allocate
   return allocateString(heapChars, length);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
   return allocateString(heapChars, length, hash);
 
@@ -1978,6 +2833,19 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
   switch (OBJ_TYPE(value)) {
+<<<<<<< HEAD
+=======
+    case OBJ_ARRAY: {
+      ObjArray* array = AS_ARRAY(value);
+      printf("[");
+      for (int i = 0; i < array->length; i++) {
+        printValue(array->elements[i]);
+        if (i < array->length - 1) printf(", ");
+      }
+      printf("]");
+      break;
+    }
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
     case OBJ_BOUND_METHOD:
       printFunction(AS_BOUND_METHOD(value)->method->function);
@@ -2021,8 +2889,12 @@ void printObject(Value value) {
 }
 
 ```
+<<<<<<< HEAD
 
 ## object.h :
+=======
+## object.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // object.h
 #ifndef leetlang_object_h
@@ -2039,7 +2911,12 @@ void printObject(Value value) {
 
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
+<<<<<<< HEAD
 
+=======
+#define IS_ARRAY(value) isObjType(value, OBJ_ARRAY)
+#define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
@@ -2075,30 +2952,61 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_STRING,
     OBJ_UPVALUE,
+<<<<<<< HEAD
     OBJ_EXCEPTION,
     OBJ_EXCEPTION_HANDLER
+=======
+    OBJ_EXCEPTION_HANDLER,
+    OBJ_ARRAY 
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 } ObjType;
 
 
 struct Obj {
   ObjType type;
+<<<<<<< HEAD
   bool isMarked;
   struct Obj* next;
 };
 
+=======
+
+  bool isMarked;
+
+
+  struct Obj* next;
+
+};
+
+typedef struct {
+  Obj obj;
+  int length;
+  Value* elements;
+} ObjArray;
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 typedef struct {
   Obj obj;
   int arity;
+<<<<<<< HEAD
   int upvalueCount;
+=======
+
+  int upvalueCount;
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   Chunk chunk;
   ObjString* name;
 } ObjFunction;
 
+<<<<<<< HEAD
 typedef struct {
     Obj obj;
     ObjString* message;  // Message for exception details
 } ObjException;
+=======
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 typedef Value (*NativeFn)(int argCount, Value* args);
 
@@ -2107,11 +3015,22 @@ typedef struct {
   NativeFn function;
 } ObjNative;
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 struct ObjString {
   Obj obj;
   int length;
   char* chars;
+<<<<<<< HEAD
   uint32_t hash;
+=======
+
+  uint32_t hash;
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 };
 
 
@@ -2130,6 +3049,7 @@ typedef struct ObjUpvalue {
 typedef struct {
   Obj obj;
   ObjFunction* function;
+<<<<<<< HEAD
   ObjUpvalue** upvalues;
   int upvalueCount;
 } ObjClosure;
@@ -2142,6 +3062,26 @@ typedef struct ObjClass {
   ObjClass** superclasses;
 } ObjClass;
 
+=======
+
+  ObjUpvalue** upvalues;
+  int upvalueCount;
+
+} ObjClosure;
+
+
+
+typedef struct {
+  Obj obj;
+  ObjString* name;
+
+  Table methods;
+
+} ObjClass;
+
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 typedef struct {
   Obj obj;
   ObjClass* klass;
@@ -2161,6 +3101,7 @@ typedef struct {
     int catchAddress;  // Address to jump to for the catch block
 } ObjExceptionHandler;
 
+<<<<<<< HEAD
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method);
 ObjClass* newClass(ObjString* name);
@@ -2174,10 +3115,46 @@ void classAddSuperclass(ObjClass* klass, ObjClass* superclass);
 ObjUpvalue* newUpvalue(Value* slot);
 ObjString* asString(Obj* obj);
 ObjException* newException(ObjString* message);
+=======
+ObjArray* newArray(int length);
+void sortArray(ObjArray* array);
+
+ObjBoundMethod* newBoundMethod(Value receiver,
+                               ObjClosure* method);
+
+
+ObjClass* newClass(ObjString* name);
+
+
+ObjClosure* newClosure(ObjFunction* function);
+
+
+ObjFunction* newFunction();
+
+
+ObjInstance* newInstance(ObjClass* klass);
+
+
+ObjNative* newNative(NativeFn function);
+
+
+ObjString* takeString(char* chars, int length);
+
+
+ObjString* copyString(const char* chars, int length);
+
+ObjUpvalue* newUpvalue(Value* slot);
+ObjString* asString(Obj* obj);
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ObjExceptionHandler* newExceptionHandler(int catchAddress);
 void printObject(Value value);
 
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
@@ -2185,8 +3162,12 @@ static inline bool isObjType(Value value, ObjType type) {
 
 #endif
 ```
+<<<<<<< HEAD
 
 ## scanner.c :
+=======
+## scanner.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // scanner.c
 
@@ -2438,6 +3419,11 @@ Token scanToken() {
     case ')': return makeToken(TOKEN_RIGHT_PAREN);
     case '{': return makeToken(TOKEN_LEFT_BRACE);
     case '}': return makeToken(TOKEN_RIGHT_BRACE);
+<<<<<<< HEAD
+=======
+    case '[': return makeToken(TOKEN_LEFT_BRACKET);
+    case ']': return makeToken(TOKEN_RIGHT_BRACKET);
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     case ';': return makeToken(TOKEN_SEMICOLON);
     case ',': return makeToken(TOKEN_COMMA);
     case '.': return makeToken(TOKEN_DOT);
@@ -2469,8 +3455,12 @@ Token scanToken() {
 }
 
 ```
+<<<<<<< HEAD
 
 ## scanner.h :
+=======
+## scanner.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // scanner.h
 #ifndef leetlang_scanner_h
@@ -2480,6 +3470,10 @@ typedef enum {
   // Single-character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
   TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
+<<<<<<< HEAD
+=======
+  TOKEN_LEFT_BRACKET, TOKEN_RIGHT_BRACKET,
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
   TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
   // One or two character tokens.
@@ -2494,7 +3488,11 @@ typedef enum {
   TOKEN_FOR, TOKEN_FUN, TOKEN_IF, TOKEN_NIL, TOKEN_OR,
   TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
   TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
+<<<<<<< HEAD
   TOKEN_TRY, TOKEN_CATCH, TOKEN_THROW, TOKEN_FINALLY, TOKEN_EXCEPTION,
+=======
+  TOKEN_TRY, TOKEN_CATCH, TOKEN_THROW, TOKEN_FINALLY,
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
   TOKEN_ERROR, TOKEN_EOF
 } TokenType;
@@ -2516,8 +3514,12 @@ Token scanToken();
 
 #endif
 ```
+<<<<<<< HEAD
 
 ## table.c :
+=======
+## table.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // table.c
 
@@ -2692,8 +3694,12 @@ void tableRemoveWhite(Table* table) {
 
 
 ```
+<<<<<<< HEAD
 
 ## table.h :
+=======
+## table.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // table.h
 #ifndef leetlang_table_h
@@ -2724,8 +3730,12 @@ void tableRemoveWhite(Table* table);
 void markTable(Table* table);
 #endif
 ```
+<<<<<<< HEAD
 
 ## value.c :
+=======
+## value.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // value.c
 
@@ -2778,6 +3788,7 @@ void printValue(Value value) {
     printObject(value);
   }
 #else
+<<<<<<< HEAD
 
 /* Chunks of Bytecode print-value < Types of Values print-number-value
   printf("%g", value);
@@ -2786,6 +3797,8 @@ void printValue(Value value) {
  printf("%g", AS_NUMBER(value));
  */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   switch (value.type) {
     case VAL_BOOL:
       printf(AS_BOOL(value) ? "true" : "false");
@@ -2819,6 +3832,7 @@ bool valuesEqual(Value a, Value b) {
     case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
     case VAL_NIL:    return true;
     case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+<<<<<<< HEAD
 /* Strings strings-equal < Hash Tables equal
     case VAL_OBJ: {
       ObjString* aString = AS_STRING(a);
@@ -2829,6 +3843,8 @@ bool valuesEqual(Value a, Value b) {
     }
  */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     case VAL_OBJ:    return AS_OBJ(a) == AS_OBJ(b);
 
     default:         return false; // Unreachable.
@@ -2839,8 +3855,12 @@ bool valuesEqual(Value a, Value b) {
 }
 
 ```
+<<<<<<< HEAD
 
 ## value.h :
+=======
+## value.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // value.h
 #ifndef leetlang_value_h
@@ -2866,14 +3886,20 @@ typedef uint64_t Value;
 #define IS_NUMBER(value)    (((value) & QNAN) != QNAN)
 #define IS_OBJ(value) \
     (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
+<<<<<<< HEAD
 #define IS_EXCEPTION(value) (IS_OBJ(value) && AS_OBJ(value)->type == OBJ_EXCEPTION)
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 #define AS_BOOL(value)      ((value) == TRUE_VAL)
 #define AS_NUMBER(value)    valueToNum(value)
 #define AS_OBJ(value) \
     ((Obj*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
+<<<<<<< HEAD
 #define AS_EXCEPTION(value) ((ObjException*)AS_OBJ(value))  
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 #define BOOL_VAL(b)     ((b) ? TRUE_VAL : FALSE_VAL)
 #define FALSE_VAL       ((Value)(uint64_t)(QNAN | TAG_FALSE))
 #define TRUE_VAL        ((Value)(uint64_t)(QNAN | TAG_TRUE))
@@ -2881,8 +3907,11 @@ typedef uint64_t Value;
 #define NUMBER_VAL(num) numToValue(num)
 #define OBJ_VAL(obj) \
     (Value)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
+<<<<<<< HEAD
 #define EXCEPTION_VAL(exception) OBJ_VAL(exception)
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 static inline double valueToNum(Value value) {
   double num;
@@ -2943,8 +3972,12 @@ void printValue(Value value);
 #endif
 
 ```
+<<<<<<< HEAD
 
 ## vm.c :
+=======
+## vm.c
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // vm.c
 
@@ -2994,6 +4027,7 @@ static void runtimeError(const char* format, ...) {
   va_end(args);
   fputs("\n", stderr);
 
+<<<<<<< HEAD
 /* Types of Values runtime-error < Calls and Functions runtime-error-temp
   size_t instruction = vm.ip - vm.chunk->code - 1;
   int line = vm.chunk->lines[instruction];
@@ -3012,6 +4046,10 @@ static void runtimeError(const char* format, ...) {
 /* Calls and Functions runtime-error-stack < Closures runtime-error-function
     ObjFunction* function = frame->function;
 */
+=======
+  for (int i = vm.frameCount - 1; i >= 0; i--) {
+    CallFrame* frame = &vm.frames[i];
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
     ObjFunction* function = frame->closure->function;
 
@@ -3029,6 +4067,7 @@ static void runtimeError(const char* format, ...) {
   resetStack();
 }
 
+<<<<<<< HEAD
 // Helper function to check if a class is a subclass of another
 bool isSubclass(ObjClass* derived, ObjClass* superclass) {
     if (derived == superclass) {
@@ -3085,6 +4124,8 @@ void initExceptionClass() {
     tableSet(&vm.globals, name, OBJ_VAL(klass));
     pop(); // Remove class from stack
 }
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 static Value clockNative(int argCount, Value* args) {
   return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -3209,19 +4250,45 @@ static Value peek(int distance) {
   return vm.stackTop[-1 - distance];
 }
 
+<<<<<<< HEAD
 /* Calls and Functions call < Closures call-signature
 static bool call(ObjFunction* function, int argCount) {
 */
+=======
+static Value arrayIndex(Value arrayVal, Value indexVal) {
+  ObjArray* array = AS_ARRAY(arrayVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= array->length) {
+    runtimeError("Array index out of bounds.");
+    return NIL_VAL;
+  }
+  return array->elements[index];
+}
+
+static Value stringIndex(Value stringVal, Value indexVal) {
+  ObjString* string = AS_STRING(stringVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= string->length) {
+    runtimeError("String index out of bounds.");
+    return NIL_VAL;
+  }
+  char chars[2] = { string->chars[index], '\0' };
+  return OBJ_VAL(copyString(chars, 1));
+}
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 
 static bool call(ObjClosure* closure, int argCount) {
 
+<<<<<<< HEAD
 /* Calls and Functions check-arity < Closures check-arity
   if (argCount != function->arity) {
     runtimeError("Expected %d arguments but got %d.",
         function->arity, argCount);
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   if (argCount != closure->function->arity) {
     runtimeError("Expected %d arguments but got %d.",
         closure->function->arity, argCount);
@@ -3239,10 +4306,13 @@ static bool call(ObjClosure* closure, int argCount) {
 
 
   CallFrame* frame = &vm.frames[vm.frameCount++];
+<<<<<<< HEAD
 /* Calls and Functions call < Closures call-init-closure
   frame->function = function;
   frame->ip = function->chunk.code;
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
   frame->closure = closure;
   frame->ip = closure->function->chunk.code;
@@ -3288,11 +4358,14 @@ static bool callValue(Value callee, int argCount) {
       case OBJ_CLOSURE:
         return call(AS_CLOSURE(callee), argCount);
 
+<<<<<<< HEAD
 /* Calls and Functions call-value < Closures call-value-closure
       case OBJ_FUNCTION: // [switch]
         return call(AS_FUNCTION(callee), argCount);
 */
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
       case OBJ_NATIVE: {
         NativeFn native = AS_NATIVE(callee);
         Value result = native(argCount, vm.stackTop - argCount);
@@ -3339,6 +4412,7 @@ static bool invoke(ObjString* name, int argCount) {
 
 static bool bindMethod(ObjClass* klass, ObjString* name) {
   Value method;
+<<<<<<< HEAD
   for (int i = 0; i < klass->superclassCount; i++) {
     if (tableGet(&klass->superclasses[i]->methods, name, &method)) {
       ObjBoundMethod* bound = newBoundMethod(peek(0), AS_CLOSURE(method));
@@ -3350,6 +4424,21 @@ static bool bindMethod(ObjClass* klass, ObjString* name) {
   return false; // Method not found in any superclass
 }
 
+=======
+  if (!tableGet(&klass->methods, name, &method)) {
+    runtimeError("Undefined property '%s'.", name->chars);
+    return false;
+  }
+
+  ObjBoundMethod* bound = newBoundMethod(peek(0),
+                                         AS_CLOSURE(method));
+  pop();
+  push(OBJ_VAL(bound));
+  return true;
+}
+
+
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 static ObjUpvalue* captureUpvalue(Value* local) {
 
   ObjUpvalue* prevUpvalue = NULL;
@@ -3404,10 +4493,13 @@ static bool isFalsey(Value value) {
 
 
 static void concatenate() {
+<<<<<<< HEAD
 /* Strings concatenate < Garbage Collection concatenate-peek
   ObjString* b = AS_STRING(pop());
   ObjString* a = AS_STRING(pop());
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
   ObjString* b = AS_STRING(peek(0));
   ObjString* a = AS_STRING(peek(1));
@@ -3621,6 +4713,7 @@ static InterpretResult run() {
         frame->ip -= offset;
         break;
       }
+<<<<<<< HEAD
       case OP_THROW: {
         ObjException* exception = AS_EXCEPTION(pop());
         // Unwind the stack to find the nearest exception handler
@@ -3656,6 +4749,8 @@ static InterpretResult run() {
       case OP_FINALLY_END: {
           break;
       }
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
       case OP_CALL: {
         int argCount = READ_BYTE();
         if (!callValue(peek(argCount), argCount)) {
@@ -3734,6 +4829,121 @@ static InterpretResult run() {
       case OP_METHOD:
         defineMethod(READ_STRING());
         break;
+<<<<<<< HEAD
+=======
+      case OP_TRY_START: {
+          int catchOffset = READ_SHORT();
+          push(OBJ_VAL(newExceptionHandler((int)(frame->ip - frame->closure->function->chunk.code) + catchOffset)));
+          break;
+      }
+      case OP_THROW: {
+          Value error = pop(); // Get the thrown error object
+          // Unwind stack until an exception handler is found or the stack is empty
+          while (!IS_EXCEPTION_HANDLER(peek(0)) && vm.stackTop > vm.stack) {
+              pop();
+          }
+          if (vm.stackTop == vm.stack) {
+              runtimeError("Uncaught exception.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          ObjExceptionHandler* handler = AS_EXCEPTION_HANDLER(pop());
+          frame->ip = frame->closure->function->chunk.code + handler->catchAddress;
+          push(error);  // Put the error object back on the stack for the catch block
+          break;
+      }
+      case OP_CATCH_START: {
+          // Start of a catch block
+          break;
+      }
+      case OP_CATCH_END:
+      case OP_FINALLY_START: {
+          // Clean up after catch, prepare for finally
+          break;
+      }
+      case OP_FINALLY_END: {
+          // End of finally, restore normal execution flow
+          break;
+      }
+      case OP_ARRAY: {
+        int elementCount = READ_BYTE();
+        ObjArray* array = newArray(elementCount);
+        for (int i = elementCount - 1; i >= 0; i--) {
+          array->elements[i] = pop();
+        }
+        push(OBJ_VAL(array));
+        break;
+      }
+      case OP_INDEX: {
+        Value index = pop();
+        Value collection = peek(0);
+        
+        if (IS_STRING(collection)) {
+          if (!IS_NUMBER(index)) {
+            runtimeError("String index must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          int i = (int)AS_NUMBER(index);
+          ObjString* string = AS_STRING(collection);
+          
+          if (i < 0 || i >= string->length) {
+            runtimeError("String index out of bounds.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          push(OBJ_VAL(copyString(&string->chars[i], 1)));
+        } else if (IS_ARRAY(collection)) {
+          if (!IS_NUMBER(index)) {
+            runtimeError("Array index must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          int i = (int)AS_NUMBER(index);
+          ObjArray* array = AS_ARRAY(collection);
+          
+          if (i < 0 || i >= array->length) {
+            runtimeError("Array index out of bounds.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          push(array->elements[i]);
+        } else {
+          runtimeError("Cannot index non-array or non-string.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      }
+      case OP_ARRAY_INDEX: {
+        Value index = pop();
+        Value array = pop();
+        if (!IS_ARRAY(array) || !IS_NUMBER(index)) {
+          runtimeError("Invalid array indexing.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(arrayIndex(array, index));
+        break;
+      }
+      case OP_STRING_INDEX: {
+        Value index = pop();
+        Value string = pop();
+        if (!IS_STRING(string) || !IS_NUMBER(index)) {
+          runtimeError("Invalid string indexing.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(stringIndex(string, index));
+        break;
+      }
+      case OP_SORT: {
+        Value array = pop();
+        if (!IS_ARRAY(array)) {
+          runtimeError("Can only sort arrays.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        sortArray(AS_ARRAY(array));
+        push(array);
+        break;
+      }
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
     }
   }
 
@@ -3764,8 +4974,12 @@ InterpretResult interpret(const char* source) {
 }
 
 ```
+<<<<<<< HEAD
 
 ## vm.h :
+=======
+## vm.h
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 ```
 // vm.h
 #ifndef leetlang_vm_h
@@ -3795,18 +5009,23 @@ InterpretResult interpret(const char* source) {
 
 
 typedef struct {
+<<<<<<< HEAD
 /* Calls and Functions call-frame < Closures call-frame-closure
   ObjFunction* function;
 */
 
   ObjClosure* closure;
 
+=======
+  ObjClosure* closure;
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
   uint8_t* ip;
   Value* slots;
 } CallFrame;
 
 
 typedef struct {
+<<<<<<< HEAD
 /* A Virtual Machine vm-h < Calls and Functions frame-array
   Chunk* chunk;
 */
@@ -3847,6 +5066,22 @@ typedef struct {
   int grayCapacity;
   Obj** grayStack;
 
+=======
+  CallFrame frames[FRAMES_MAX];
+  int frameCount;
+  Value stack[STACK_MAX];
+  Value* stackTop;
+  Table globals;
+  Table strings;
+  ObjString* initString;
+  ObjUpvalue* openUpvalues;
+  size_t bytesAllocated;
+  size_t nextGC;
+  Obj* objects;
+  int grayCount;
+  int grayCapacity;
+  Obj** grayStack;
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 } VM;
 
 
@@ -3863,9 +5098,12 @@ extern VM vm;
 
 void initVM();
 void freeVM();
+<<<<<<< HEAD
 /* A Virtual Machine interpret-h < Scanning on Demand vm-interpret-h
 InterpretResult interpret(Chunk* chunk);
 */
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8
 
 InterpretResult interpret(const char* source);
 
@@ -3876,4 +5114,7 @@ Value pop();
 
 #endif
 ```
+<<<<<<< HEAD
 
+=======
+>>>>>>> 426e6593074f387396ac30d2ce3efebc49a1fae8

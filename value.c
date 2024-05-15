@@ -49,14 +49,6 @@ void printValue(Value value) {
     printObject(value);
   }
 #else
-
-/* Chunks of Bytecode print-value < Types of Values print-number-value
-  printf("%g", value);
-*/
-/* Types of Values print-number-value < Types of Values print-value
- printf("%g", AS_NUMBER(value));
- */
-
   switch (value.type) {
     case VAL_BOOL:
       printf(AS_BOOL(value) ? "true" : "false");
@@ -90,16 +82,6 @@ bool valuesEqual(Value a, Value b) {
     case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
     case VAL_NIL:    return true;
     case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
-/* Strings strings-equal < Hash Tables equal
-    case VAL_OBJ: {
-      ObjString* aString = AS_STRING(a);
-      ObjString* bString = AS_STRING(b);
-      return aString->length == bString->length &&
-          memcmp(aString->chars, bString->chars,
-                 aString->length) == 0;
-    }
- */
-
     case VAL_OBJ:    return AS_OBJ(a) == AS_OBJ(b);
 
     default:         return false; // Unreachable.

@@ -46,24 +46,8 @@ static void runtimeError(const char* format, ...) {
   va_end(args);
   fputs("\n", stderr);
 
-/* Types of Values runtime-error < Calls and Functions runtime-error-temp
-  size_t instruction = vm.ip - vm.chunk->code - 1;
-  int line = vm.chunk->lines[instruction];
-*/
-/* Calls and Functions runtime-error-temp < Calls and Functions runtime-error-stack
-  CallFrame* frame = &vm.frames[vm.frameCount - 1];
-  size_t instruction = frame->ip - frame->function->chunk.code - 1;
-  int line = frame->function->chunk.lines[instruction];
-*/
-/* Types of Values runtime-error < Calls and Functions runtime-error-stack
-  fprintf(stderr, "[line %d] in script\n", line);
-*/
-
   for (int i = vm.frameCount - 1; i >= 0; i--) {
     CallFrame* frame = &vm.frames[i];
-/* Calls and Functions runtime-error-stack < Closures runtime-error-function
-    ObjFunction* function = frame->function;
-*/
 
     ObjFunction* function = frame->closure->function;
 
@@ -261,18 +245,42 @@ static Value peek(int distance) {
   return vm.stackTop[-1 - distance];
 }
 
-/* Calls and Functions call < Closures call-signature
-static bool call(ObjFunction* function, int argCount) {
-*/
+static Value arrayIndex(Value arrayVal, Value indexVal) {
+  ObjArray* array = AS_ARRAY(arrayVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= array->length) {
+    runtimeError("Array index out of bounds.");
+    return NIL_VAL;
+  }
+  return array->elements[index];
+}
 
+static Value stringIndex(Value stringVal, Value indexVal) {
+  ObjString* string = AS_STRING(stringVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= string->length) {
+    runtimeError("String index out of bounds.");
+    return NIL_VAL;
+  }
+  char chars[2] = { string->chars[index], '\0' };
+  return OBJ_VAL(copyString(chars, 1));
+}
+
+static void setArrayIndex(Value arrayVal, Value indexVal, Value value) {
+  ObjArray* array = AS_ARRAY(arrayVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= array->length) {
+    runtimeError("Array index out of bounds.");
+    return;
+  }
+  array->elements[index] = value;
+}
+
+static void setStringIndex(Value stringVal, Value indexVal, Value value) {
+  runtimeError("Strings are immutable.");
+}
 
 static bool call(ObjClosure* closure, int argCount) {
-
-/* Calls and Functions check-arity < Closures check-arity
-  if (argCount != function->arity) {
-    runtimeError("Expected %d arguments but got %d.",
-        function->arity, argCount);
-*/
 
   if (argCount != closure->function->arity) {
     runtimeError("Expected %d arguments but got %d.",
@@ -291,10 +299,6 @@ static bool call(ObjClosure* closure, int argCount) {
 
 
   CallFrame* frame = &vm.frames[vm.frameCount++];
-/* Calls and Functions call < Closures call-init-closure
-  frame->function = function;
-  frame->ip = function->chunk.code;
-*/
 
   frame->closure = closure;
   frame->ip = closure->function->chunk.code;
@@ -339,11 +343,6 @@ static bool callValue(Value callee, int argCount) {
 
       case OBJ_CLOSURE:
         return call(AS_CLOSURE(callee), argCount);
-
-/* Calls and Functions call-value < Closures call-value-closure
-      case OBJ_FUNCTION: // [switch]
-        return call(AS_FUNCTION(callee), argCount);
-*/
 
       case OBJ_NATIVE: {
         NativeFn native = AS_NATIVE(callee);
@@ -458,10 +457,6 @@ static bool isFalsey(Value value) {
 
 
 static void concatenate() {
-/* Strings concatenate < Garbage Collection concatenate-peek
-  ObjString* b = AS_STRING(pop());
-  ObjString* a = AS_STRING(pop());
-*/
 
   ObjString* b = AS_STRING(peek(0));
   ObjString* a = AS_STRING(peek(1));
@@ -788,6 +783,133 @@ static InterpretResult run() {
       case OP_METHOD:
         defineMethod(READ_STRING());
         break;
+      case OP_TRY_START: {
+          int catchOffset = READ_SHORT();
+          push(OBJ_VAL(newExceptionHandler((int)(frame->ip - frame->closure->function->chunk.code) + catchOffset)));
+          break;
+      }
+      case OP_THROW: {
+          Value error = pop(); // Get the thrown error object
+          // Unwind stack until an exception handler is found or the stack is empty
+          while (!IS_EXCEPTION_HANDLER(peek(0)) && vm.stackTop > vm.stack) {
+              pop();
+          }
+          if (vm.stackTop == vm.stack) {
+              runtimeError("Uncaught exception.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          ObjExceptionHandler* handler = AS_EXCEPTION_HANDLER(pop());
+          frame->ip = frame->closure->function->chunk.code + handler->catchAddress;
+          push(error);  // Put the error object back on the stack for the catch block
+          break;
+      }
+      case OP_CATCH_START: {
+          // Start of a catch block
+          break;
+      }
+      case OP_CATCH_END:
+      case OP_FINALLY_START: {
+          // Clean up after catch, prepare for finally
+          break;
+      }
+      case OP_FINALLY_END: {
+          // End of finally, restore normal execution flow
+          break;
+      }
+      case OP_ARRAY: {
+        int elementCount = READ_BYTE();
+        ObjArray* array = newArray(elementCount);
+        for (int i = elementCount - 1; i >= 0; i--) {
+          array->elements[i] = pop();
+        }
+        push(OBJ_VAL(array));
+        break;
+      }
+      case OP_INDEX: {
+        Value index = pop();
+        Value collection = peek(0);
+        
+        if (IS_STRING(collection)) {
+          if (!IS_NUMBER(index)) {
+            runtimeError("String index must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          int i = (int)AS_NUMBER(index);
+          ObjString* string = AS_STRING(collection);
+          
+          if (i < 0 || i >= string->length) {
+            runtimeError("String index out of bounds.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          push(OBJ_VAL(copyString(&string->chars[i], 1)));
+        } else if (IS_ARRAY(collection)) {
+          if (!IS_NUMBER(index)) {
+            runtimeError("Array index must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          int i = (int)AS_NUMBER(index);
+          ObjArray* array = AS_ARRAY(collection);
+          
+          if (i < 0 || i >= array->length) {
+            runtimeError("Array index out of bounds.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          push(array->elements[i]);
+        } else {
+          runtimeError("Cannot index non-array or non-string.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      }
+      case OP_SET_INDEX: {
+        Value value = pop();
+        Value index = pop();
+        Value collection = pop();
+        if (IS_ARRAY(collection)) {
+          setArrayIndex(collection, index, value);
+        } else if (IS_STRING(collection)) {
+          setStringIndex(collection, index, value);
+        } else {
+          runtimeError("Can only set elements on arrays and strings.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(value);  // Push the value to keep the stack balanced
+        break;
+      }
+      case OP_ARRAY_INDEX: {
+        Value index = pop();
+        Value array = pop();
+        if (!IS_ARRAY(array) || !IS_NUMBER(index)) {
+          runtimeError("Invalid array indexing.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(arrayIndex(array, index));
+        break;
+      }
+      case OP_STRING_INDEX: {
+        Value index = pop();
+        Value string = pop();
+        if (!IS_STRING(string) || !IS_NUMBER(index)) {
+          runtimeError("Invalid string indexing.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(stringIndex(string, index));
+        break;
+      }
+      case OP_SORT: {
+        Value array = pop();
+        if (!IS_ARRAY(array)) {
+          runtimeError("Can only sort arrays.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        sortArray(AS_ARRAY(array));
+        push(array);
+        break;
+      }
     }
   }
 

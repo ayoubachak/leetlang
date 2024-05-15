@@ -1,81 +1,35 @@
-fun bench(){
-    var c = clock();
-    for (var i = 0; i < 1000000; i=i+1){
-        
-    }
-    print(clock() - c);
-}
-bench();
-// TODO : fix the try except
-// try{
-//      throw "Error occurred";
-// }catch (e) {
-//      print "Caught error: " + e;
-//  } finally {
-//      print "Cleanup actions";
-//  };
-
-class Base1 {
-    base1Method() {
-        print("Method in Base1");
-    }
-
-    name() {
-        print("Base1");
+class A {
+    greet(){
+        print "hello from A";
     }
 }
 
-class Base2 {
-    base2Method() {
-        print("Method in Base2");
-    }
 
-    name() {
-        print("Base2");
-    }
-}
-class Base3 {
-    base3Method() {
-        print("Method in Base3");
-    }
-    name() {
-        print("Base3");
-    }
-}
-class Derived(Base1, Base2) {
-    init(){
-        print("Init Derived");
-        super.name() ;
-    }
-    derivedMethod() {
-        print("Method in Derived");
-    }
-    name() {
-        print("Derived");
+class B < A{ // we should also have access to this syntax ```class B(A){}```
+    greet(){
+        print "hello from B";
+        super.greet();
     }
 }
 
-class FurtherDerived(Derived, Base3) {
-    furtherDerivedMethod() {
-        print("Method in FurtherDerived");
+class C < A{
+    greet(){
+        print "hello from C";
+        super.greet();
     }
 }
 
-var object1 = Derived();
-object1.base1Method();   // Should print: "Method in Base1"
-object1.base2Method();   // Should print: "Method in Base2"
-object1.derivedMethod(); // Should print: "Method in Derived"
-
-var object2 = FurtherDerived();
-object2.base1Method();          // Should print: "Method in Base1"
-object2.base2Method();          // Should print: "Method in Base2"
-object2.base3Method();          // Should print: "Method in Base3"
-object2.derivedMethod();        // Should print: "Method in Derived"
-object2.furtherDerivedMethod(); // Should print: "Method in FurtherDerived"
+class D < C{
+    greet(){
+        print "hello from D";
+        super.greet();
+    }
+}
+var b = B();
+b.greet();
 
 
-print(nil);
-
-assert(true, "This should not fail.");
-print assert(false, "This should fail and print this message.");
-
+var numbers = [1, 2, 3, 4, 5, 6, 7];
+print(numbers[1]);
+numbers[1] = 1;
+print(numbers[1]); 
