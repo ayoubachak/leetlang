@@ -46,24 +46,8 @@ static void runtimeError(const char* format, ...) {
   va_end(args);
   fputs("\n", stderr);
 
-/* Types of Values runtime-error < Calls and Functions runtime-error-temp
-  size_t instruction = vm.ip - vm.chunk->code - 1;
-  int line = vm.chunk->lines[instruction];
-*/
-/* Calls and Functions runtime-error-temp < Calls and Functions runtime-error-stack
-  CallFrame* frame = &vm.frames[vm.frameCount - 1];
-  size_t instruction = frame->ip - frame->function->chunk.code - 1;
-  int line = frame->function->chunk.lines[instruction];
-*/
-/* Types of Values runtime-error < Calls and Functions runtime-error-stack
-  fprintf(stderr, "[line %d] in script\n", line);
-*/
-
   for (int i = vm.frameCount - 1; i >= 0; i--) {
     CallFrame* frame = &vm.frames[i];
-/* Calls and Functions runtime-error-stack < Closures runtime-error-function
-    ObjFunction* function = frame->function;
-*/
 
     ObjFunction* function = frame->closure->function;
 
@@ -226,18 +210,21 @@ static Value stringIndex(Value stringVal, Value indexVal) {
   return OBJ_VAL(copyString(chars, 1));
 }
 
-/* Calls and Functions call < Closures call-signature
-static bool call(ObjFunction* function, int argCount) {
-*/
+static void setArrayIndex(Value arrayVal, Value indexVal, Value value) {
+  ObjArray* array = AS_ARRAY(arrayVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= array->length) {
+    runtimeError("Array index out of bounds.");
+    return;
+  }
+  array->elements[index] = value;
+}
 
+static void setStringIndex(Value stringVal, Value indexVal, Value value) {
+  runtimeError("Strings are immutable.");
+}
 
 static bool call(ObjClosure* closure, int argCount) {
-
-/* Calls and Functions check-arity < Closures check-arity
-  if (argCount != function->arity) {
-    runtimeError("Expected %d arguments but got %d.",
-        function->arity, argCount);
-*/
 
   if (argCount != closure->function->arity) {
     runtimeError("Expected %d arguments but got %d.",
@@ -256,10 +243,6 @@ static bool call(ObjClosure* closure, int argCount) {
 
 
   CallFrame* frame = &vm.frames[vm.frameCount++];
-/* Calls and Functions call < Closures call-init-closure
-  frame->function = function;
-  frame->ip = function->chunk.code;
-*/
 
   frame->closure = closure;
   frame->ip = closure->function->chunk.code;
@@ -304,11 +287,6 @@ static bool callValue(Value callee, int argCount) {
 
       case OBJ_CLOSURE:
         return call(AS_CLOSURE(callee), argCount);
-
-/* Calls and Functions call-value < Closures call-value-closure
-      case OBJ_FUNCTION: // [switch]
-        return call(AS_FUNCTION(callee), argCount);
-*/
 
       case OBJ_NATIVE: {
         NativeFn native = AS_NATIVE(callee);
@@ -423,10 +401,6 @@ static bool isFalsey(Value value) {
 
 
 static void concatenate() {
-/* Strings concatenate < Garbage Collection concatenate-peek
-  ObjString* b = AS_STRING(pop());
-  ObjString* a = AS_STRING(pop());
-*/
 
   ObjString* b = AS_STRING(peek(0));
   ObjString* a = AS_STRING(peek(1));
@@ -798,6 +772,21 @@ static InterpretResult run() {
           runtimeError("Cannot index non-array or non-string.");
           return INTERPRET_RUNTIME_ERROR;
         }
+        break;
+      }
+      case OP_SET_INDEX: {
+        Value value = pop();
+        Value index = pop();
+        Value collection = pop();
+        if (IS_ARRAY(collection)) {
+          setArrayIndex(collection, index, value);
+        } else if (IS_STRING(collection)) {
+          setStringIndex(collection, index, value);
+        } else {
+          runtimeError("Can only set elements on arrays and strings.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(value);  // Push the value to keep the stack balanced
         break;
       }
       case OP_ARRAY_INDEX: {

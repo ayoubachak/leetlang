@@ -22,9 +22,6 @@ void freeChunk(Chunk* chunk) {
   freeValueArray(&chunk->constants);
   initChunk(chunk);
 }
-/* Chunks of Bytecode write-chunk < Chunks of Bytecode write-chunk-with-line
-void writeChunk(Chunk* chunk, uint8_t byte) {
-*/
 void writeChunk(Chunk* chunk, uint8_t byte, int line) {
   if (chunk->capacity < chunk->count + 1) {
     int oldCapacity = chunk->capacity;
@@ -96,7 +93,12 @@ typedef enum {
   OP_CLASS,
   OP_INHERIT,
   OP_METHOD,
-  OP_TRY_START, OP_TRY_END, OP_THROW, OP_CATCH_START, OP_CATCH_END, OP_FINALLY_START, OP_FINALLY_END
+  OP_TRY_START, OP_TRY_END, OP_THROW, OP_CATCH_START, OP_CATCH_END, OP_FINALLY_START, OP_FINALLY_END,
+  OP_ARRAY,          // Array creation
+  OP_ARRAY_INDEX,    // Array indexing
+  OP_STRING_INDEX,   // String indexing
+  OP_INDEX,
+  OP_SORT,         // Sort array
 } OpCode;
 
 
@@ -114,9 +116,6 @@ void initChunk(Chunk* chunk);
 
 void freeChunk(Chunk* chunk);
 
-/* Chunks of Bytecode write-chunk-h < Chunks of Bytecode write-chunk-with-line-h
-void writeChunk(Chunk* chunk, uint8_t byte);
-*/
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 
 int addConstant(Chunk* chunk, Value value);
@@ -190,10 +189,6 @@ typedef enum {
 } Precedence;
 
 
-/* Compiling Expressions parse-fn-type < Global Variables parse-fn-type
-typedef void (*ParseFn)();
-*/
-
 typedef void (*ParseFn)(bool canAssign);
 
 typedef struct {
@@ -201,7 +196,6 @@ typedef struct {
   ParseFn infix;
   Precedence precedence;
 } ParseRule;
-
 
 
 typedef struct {
@@ -224,10 +218,6 @@ typedef enum {
   TYPE_SCRIPT
 } FunctionType;
 
-
-/* Local Variables compiler-struct < Calls and Functions enclosing-field
-typedef struct {
-*/
 
 typedef struct Compiler {
   struct Compiler* enclosing;
@@ -253,13 +243,11 @@ Compiler* current = NULL;
 
 ClassCompiler* currentClass = NULL;
 
-/* Compiling Expressions compiling-chunk < Calls and Functions current-chunk
-Chunk* compilingChunk;
 
-static Chunk* currentChunk() {
-  return compilingChunk;
-}
-*/
+static void array(bool canAssign);
+static void arrayIndex(bool canAssign);
+static void stringIndex(bool canAssign);
+static void sortMethod(bool canAssign);
 
 static Chunk* currentChunk() {
   return &current->function->chunk;
@@ -340,9 +328,6 @@ static int emitJump(uint8_t instruction) {
 }
 
 static void emitReturn() {
-/* Calls and Functions return-nil < Methods and Initializers return-this
-  emitByte(OP_NIL);
-*/
   if (current->type == TYPE_INITIALIZER) {
     emitBytes(OP_GET_LOCAL, 0);
   } else {
@@ -377,15 +362,6 @@ void writeConstant(Chunk* chunk, Value value, int line) {
 
 static void emitConstant(Value value) {
     emitBytes(OP_CONSTANT, makeConstant(value));
-    // this implementation slowed down the process too much 
-    /*
-    int index = makeConstant(value);
-    if (index <= UINT8_MAX) {
-        emitBytes(OP_CONSTANT, (uint8_t)index);
-    } else {
-        writeConstant(currentChunk(), value, parser.previous.line);
-    }
-    */
 }
 
 static void patchJump(int offset) {
@@ -398,9 +374,6 @@ static void patchJump(int offset) {
   currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
-/* Local Variables init-compiler < Calls and Functions init-compiler
-static void initCompiler(Compiler* compiler) {
-*/
 
 static void initCompiler(Compiler* compiler, FunctionType type) {
   compiler->enclosing = current;
@@ -417,10 +390,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
   Local* local = &current->locals[current->localCount++];
   local->depth = 0;
   local->isCaptured = false;
-/* Calls and Functions init-function-slot < Methods and Initializers slot-zero
-  local->name.start = "";
-  local->name.length = 0;
-*/
+
   if (type != TYPE_FUNCTION) {
     local->name.start = "this";
     local->name.length = 4;
@@ -431,19 +401,13 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
 }
 
 
-/* Compiling Expressions end-compiler < Calls and Functions end-compiler
-static void endCompiler() {
-*/
+
 
 static ObjFunction* endCompiler() {
   emitReturn();
   ObjFunction* function = current->function;
 #ifdef DEBUG_PRINT_CODE
   if (!parser.hadError) {
-/* Compiling Expressions dump-chunk < Calls and Functions disassemble-end
-    disassembleChunk(currentChunk(), "code");
-*/
-
     disassembleChunk(currentChunk(), function->name != NULL
         ? function->name->chars : "<script>");
   }
@@ -462,9 +426,6 @@ static void endScope() {
   while (current->localCount > 0 &&
          current->locals[current->localCount - 1].depth >
             current->scopeDepth) {
-/* Local Variables pop-locals < Closures end-scope
-    emitByte(OP_POP);
-*/
     if (current->locals[current->localCount - 1].isCaptured) {
       emitByte(OP_CLOSE_UPVALUE);
     } else {
@@ -553,9 +514,6 @@ static void addLocal(Token name) {
 
   Local* local = &current->locals[current->localCount++];
   local->name = name;
-/* Local Variables add-local < Local Variables declare-undefined
-  local->depth = current->scopeDepth;
-*/
   local->depth = -1;
   local->isCaptured = false;
 
@@ -625,11 +583,6 @@ static void and_(bool canAssign) {
   patchJump(endJump);
 }
 
-
-/* Compiling Expressions binary < Global Variables binary
-static void binary() {
-*/
-
 static void binary(bool canAssign) {
   TokenType operatorType = parser.previous.type;
   ParseRule* rule = getRule(operatorType);
@@ -671,11 +624,6 @@ static void dot(bool canAssign) {
   }
 }
 
-
-/* Types of Values parse-literal < Global Variables parse-literal
-static void literal() {
-*/
-
 static void literal(bool canAssign) {
   switch (parser.previous.type) {
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
@@ -685,26 +633,13 @@ static void literal(bool canAssign) {
   }
 }
 
-
-/* Compiling Expressions grouping < Global Variables grouping
-static void grouping() {
-*/
-
 static void grouping(bool canAssign) {
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-/* Compiling Expressions number < Global Variables number
-static void number() {
-*/
-
-
 static void number(bool canAssign) {
   double value = strtod(parser.previous.start, NULL);
-/* Compiling Expressions number < Types of Values const-number-val
-  emitConstant(value);
-*/
   emitConstant(NUMBER_VAL(value));
 }
 
@@ -717,21 +652,12 @@ static void or_(bool canAssign) {
   patchJump(endJump);
 }
 
-/* Strings parse-string < Global Variables string
-static void string() {
-*/
 static void string(bool canAssign) {
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
                                   parser.previous.length - 2)));
 }
 
-/* Global Variables read-named-variable < Global Variables named-variable-signature
-static void namedVariable(Token name) {
-*/
 static void namedVariable(Token name, bool canAssign) {
-/* Global Variables read-named-variable < Local Variables named-local
-  uint8_t arg = identifierConstant(&name);
-*/
   uint8_t getOp, setOp;
   int arg = resolveLocal(current, &name);
   if (arg != -1) {
@@ -745,31 +671,14 @@ static void namedVariable(Token name, bool canAssign) {
     getOp = OP_GET_GLOBAL;
     setOp = OP_SET_GLOBAL;
   }
-/* Global Variables read-named-variable < Global Variables named-variable
-  emitBytes(OP_GET_GLOBAL, arg);
-*/
-/* Global Variables named-variable < Global Variables named-variable-can-assign
-  if (match(TOKEN_EQUAL)) {
-*/
   if (canAssign && match(TOKEN_EQUAL)) {
     expression();
-/* Global Variables named-variable < Local Variables emit-set
-    emitBytes(OP_SET_GLOBAL, arg);
-*/
     emitBytes(setOp, (uint8_t)arg);
   } else {
-/* Global Variables named-variable < Local Variables emit-get
-    emitBytes(OP_GET_GLOBAL, arg);
-*/
     emitBytes(getOp, (uint8_t)arg);
   }
 }
 
-/* Global Variables variable-without-assign < Global Variables variable
-static void variable() {
-  namedVariable(parser.previous);
-}
-*/
 static void variable(bool canAssign) {
   namedVariable(parser.previous, canAssign);
 }
@@ -792,13 +701,7 @@ static void super_(bool canAssign) {
   consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
   uint8_t name = identifierConstant(&parser.previous);
 
-  
   namedVariable(syntheticToken("this"), false);
-/* Superclasses super-get < Superclasses super-invoke
-  namedVariable(syntheticToken("super"), false);
-  emitBytes(OP_GET_SUPER, name);
-*/
-
   if (match(TOKEN_LEFT_PAREN)) {
     uint8_t argCount = argumentList();
     namedVariable(syntheticToken("super"), false);
@@ -819,18 +722,48 @@ static void this_(bool canAssign) {
   variable(false);
 } // [this]
 
+static void array(bool canAssign) {
+  // Parse elements of the array and create a new array object
+  int elementCount = 0;
+  do {
+    if (check(TOKEN_RIGHT_BRACKET)) break;
+    expression();
+    elementCount++;
+  } while (match(TOKEN_COMMA));
 
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after array elements.");
 
+  // Emit the OP_ARRAY opcode with the number of elements
+  emitBytes(OP_ARRAY, elementCount);
+}
 
-/* Compiling Expressions unary < Global Variables unary
-static void unary() {
-*/
+// Implement array indexing parsing
+static void arrayIndex(bool canAssign) {
+  // Ensure this is an array type and parse the index
+  expression();
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after array index.");
+  emitByte(OP_INDEX);
+}
+
+// Implement string indexing parsing
+static void stringIndex(bool canAssign) {
+  // Ensure this is a string type and parse the index
+  expression();
+  consume(TOKEN_RIGHT_BRACKET, "Expect ']' after string index.");
+  emitByte(OP_STRING_INDEX);
+}
+
+// Implement sort method parsing
+static void sortMethod(bool canAssign) {
+  // Ensure the sort method is being called correctly
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'sort'.");
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after 'sort'.");
+  emitByte(OP_SORT);
+}
+
 static void unary(bool canAssign) {
   TokenType operatorType = parser.previous.type;
   // Compile the operand.
-/* Compiling Expressions unary < Compiling Expressions unary-operand
-  expression();
-*/
   parsePrecedence(PREC_UNARY);
   // Emit the operator instruction.
   switch (operatorType) {
@@ -842,88 +775,44 @@ static void unary(bool canAssign) {
 }
 
 ParseRule rules[] = {
-/* Compiling Expressions rules < Calls and Functions infix-left-paren
-  [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
-*/
   [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, // [big]
+  [TOKEN_LEFT_BRACKET] = {array, arrayIndex, PREC_CALL}, // [
   [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE}, // ]
   [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Classes and Instances table-dot
-  [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_DOT]           = {NULL,     dot,    PREC_CALL},
   [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
   [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
   [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
   [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
-/* Compiling Expressions rules < Types of Values table-not
-  [TOKEN_BANG]          = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
   [TOKEN_NOT]          = {unary,    NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-equal
-  [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
   [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-comparisons
-  [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_GREATER]       = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_GREATER_EQUAL] = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LESS]          = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
   [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
-/* Compiling Expressions rules < Global Variables table-identifier
-  [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
-/* Compiling Expressions rules < Strings table-string
-  [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
-*/
-  [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+  [TOKEN_STRING] = {string, stringIndex, PREC_CALL}, // string
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
-/* Compiling Expressions rules < Jumping Back and Forth table-and
-  [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-false
-  [TOKEN_FALSE]         = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-nil
-  [TOKEN_NIL]           = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
-/* Compiling Expressions rules < Jumping Back and Forth table-or
-  [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
   [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Superclasses table-super
-  [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
-/* Compiling Expressions rules < Methods and Initializers table-this
-  [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_THIS]          = {this_,    NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-true
-  [TOKEN_TRUE]          = {NULL,     NULL,   PREC_NONE},
-*/
   [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
   [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
@@ -932,27 +821,18 @@ ParseRule rules[] = {
 };
 
 static void parsePrecedence(Precedence precedence) {
-/* Compiling Expressions parse-precedence < Compiling Expressions precedence-body
-  // What goes here?
-*/
   advance();
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == NULL) {
     error("Expect expression.");
     return;
   }
-/* Compiling Expressions precedence-body < Global Variables prefix-rule
-  prefixRule();
-*/
   bool canAssign = precedence <= PREC_ASSIGNMENT;
   prefixRule(canAssign);
 
   while (precedence <= getRule(parser.current.type)->precedence) {
     advance();
     ParseFn infixRule = getRule(parser.previous.type)->infix;
-/* Compiling Expressions infix < Global Variables infix-rule
-    infixRule();
-*/
     infixRule(canAssign);
   }
 
@@ -967,9 +847,6 @@ static ParseRule* getRule(TokenType type) {
 }
 
 static void expression() {
-/* Compiling Expressions expression < Compiling Expressions expression-body
-  // What goes here?
-*/
   parsePrecedence(PREC_ASSIGNMENT);
 }
 
@@ -1031,9 +908,6 @@ static void function(FunctionType type) {
   consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
   block();
   ObjFunction* function = endCompiler();
-/* Calls and Functions compile-function < Closures emit-closure
-  emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
-*/
   emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
   for (int i = 0; i < function->upvalueCount; i++) {
     emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
@@ -1044,9 +918,6 @@ static void function(FunctionType type) {
 static void method() {
   consume(TOKEN_IDENTIFIER, "Expect method name.");
   uint8_t constant = identifierConstant(&parser.previous);
-/* Methods and Initializers method-body < Methods and Initializers method-type
-  FunctionType type = TYPE_FUNCTION;
-*/
   FunctionType type = TYPE_METHOD;
   if (parser.previous.length == 4 &&
       memcmp(parser.previous.start, "init", 4) == 0) {
@@ -1123,9 +994,6 @@ static void expressionStatement() {
 static void forStatement() {
   beginScope();
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
-/* Jumping Back and Forth for-statement < Jumping Back and Forth for-initializer
-  consume(TOKEN_SEMICOLON, "Expect ';'.");
-*/
   if (match(TOKEN_SEMICOLON)) {
     // No initializer.
   } else if (match(TOKEN_VAR)) {
@@ -1134,9 +1002,6 @@ static void forStatement() {
     expressionStatement();
   }
   int loopStart = currentChunk()->count;
-/* Jumping Back and Forth for-statement < Jumping Back and Forth for-exit
-  consume(TOKEN_SEMICOLON, "Expect ';'.");
-*/
   int exitJump = -1;
   if (!match(TOKEN_SEMICOLON)) {
     expression();
@@ -1145,9 +1010,6 @@ static void forStatement() {
     exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP); // Condition.
   }
-/* Jumping Back and Forth for-statement < Jumping Back and Forth for-increment
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
-*/
   if (!match(TOKEN_RIGHT_PAREN)) {
     int bodyJump = emitJump(OP_JUMP);
     int incrementStart = currentChunk()->count;
@@ -1242,22 +1104,13 @@ static void synchronize() {
 static void declaration() {
   if (match(TOKEN_CLASS)) {
     classDeclaration();
-/* Calls and Functions match-fun < Classes and Instances match-class
-  if (match(TOKEN_FUN)) {
-*/
   } else if (match(TOKEN_FUN)) {
     funDeclaration();
-/* Global Variables match-var < Calls and Functions match-fun
-  if (match(TOKEN_VAR)) {
-*/
   } else if (match(TOKEN_VAR)) {
     varDeclaration();
   } else {
     statement();
   }
-/* Global Variables declaration < Global Variables match-var
-  statement();
-*/
   if (parser.panicMode) synchronize();
 }
 
@@ -1281,53 +1134,16 @@ static void statement() {
   }
 }
 
-/* Scanning on Demand compiler-c < Compiling Expressions compile-signature
-void compile(const char* source) {
-*/
-/* Compiling Expressions compile-signature < Calls and Functions compile-signature
-bool compile(const char* source, Chunk* chunk) {
-*/
 ObjFunction* compile(const char* source) {
   initScanner(source);
-/* Scanning on Demand dump-tokens < Compiling Expressions compile-chunk
-  int line = -1;
-  for (;;) {
-    Token token = scanToken();
-    if (token.line != line) {
-      printf("%4d ", token.line);
-      line = token.line;
-    } else {
-      printf("   | ");
-    }
-    printf("%2d '%.*s'\n", token.type, token.length, token.start); // [format]
-
-    if (token.type == TOKEN_EOF) break;
-  }
-*/
   Compiler compiler;
-/* Local Variables compiler < Calls and Functions call-init-compiler
-  initCompiler(&compiler);
-*/
   initCompiler(&compiler, TYPE_SCRIPT);
-/* Compiling Expressions init-compile-chunk < Calls and Functions call-init-compiler
-  compilingChunk = chunk;
-*/
   parser.hadError = false;
   parser.panicMode = false;
   advance();
-/* Compiling Expressions compile-chunk < Global Variables compile
-  expression();
-  consume(TOKEN_EOF, "Expect end of expression.");
-*/
   while (!match(TOKEN_EOF)) {
     declaration();
   }
-/* Compiling Expressions finish-compile < Calls and Functions call-end-compiler
-  endCompiler();
-*/
-/* Compiling Expressions return-had-error < Calls and Functions call-end-compiler
-  return !parser.hadError;
-*/
   ObjFunction* function = endCompiler();
   return parser.hadError ? NULL : function;
 }
@@ -1349,12 +1165,6 @@ void markCompilerRoots() {
 
 #include "object.h"
 #include "vm.h"
-/* Scanning on Demand compiler-h < Compiling Expressions compile-h
-void compile(const char* source);
-*/
-/* Compiling Expressions compile-h < Calls and Functions compile-h
-bool compile(const char* source, Chunk* chunk);
-*/
 
 ObjFunction* compile(const char* source);
 
@@ -1697,56 +1507,6 @@ int main(int argc, const char* argv[]) {
 
   initVM();
 
-
-/* Chunks of Bytecode main-chunk < Scanning on Demand args
-  Chunk chunk;
-  initChunk(&chunk);
-*/
-/* Chunks of Bytecode main-constant < Scanning on Demand args
-
-  int constant = addConstant(&chunk, 1.2);
-*/
-/* Chunks of Bytecode main-constant < Chunks of Bytecode main-chunk-line
-  writeChunk(&chunk, OP_CONSTANT);
-  writeChunk(&chunk, constant);
-
-*/
-/* Chunks of Bytecode main-chunk-line < Scanning on Demand args
-  writeChunk(&chunk, OP_CONSTANT, 123);
-  writeChunk(&chunk, constant, 123);
-*/
-/* A Virtual Machine main-chunk < Scanning on Demand args
-
-  constant = addConstant(&chunk, 3.4);
-  writeChunk(&chunk, OP_CONSTANT, 123);
-  writeChunk(&chunk, constant, 123);
-
-  writeChunk(&chunk, OP_ADD, 123);
-
-  constant = addConstant(&chunk, 5.6);
-  writeChunk(&chunk, OP_CONSTANT, 123);
-  writeChunk(&chunk, constant, 123);
-
-  writeChunk(&chunk, OP_DIVIDE, 123);
-*/
-/* A Virtual Machine main-negate < Scanning on Demand args
-  writeChunk(&chunk, OP_NEGATE, 123);
-*/
-/* Chunks of Bytecode main-chunk < Chunks of Bytecode main-chunk-line
-  writeChunk(&chunk, OP_RETURN);
-*/
-/* Chunks of Bytecode main-chunk-line < Scanning on Demand args
-
-  writeChunk(&chunk, OP_RETURN, 123);
-*/
-/* Chunks of Bytecode main-disassemble-chunk < Scanning on Demand args
-
-  disassembleChunk(&chunk, "test chunk");
-*/
-/* A Virtual Machine main-interpret < Scanning on Demand args
-  interpret(&chunk);
-*/
-
   if (argc == 1) {
     repl();
   } else if (argc == 2) {
@@ -1758,12 +1518,6 @@ int main(int argc, const char* argv[]) {
   
   freeVM();
 
-/* A Virtual Machine main-free-vm < Scanning on Demand args
-  freeVM();
-*/
-/* Chunks of Bytecode main-chunk < Scanning on Demand args
-  freeChunk(&chunk);
-*/
   return 0;
 }
 ```
@@ -2210,6 +1964,28 @@ static Obj* allocateObject(size_t size, ObjType type) {
   return object;
 }
 
+ObjArray* newArray(int length) {
+  ObjArray* array = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
+  array->length = length;
+  array->elements = ALLOCATE(Value, length);
+  for (int i = 0; i < length; i++) {
+    array->elements[i] = NIL_VAL;
+  }
+  return array;
+}
+
+void sortArray(ObjArray* array) {
+  // Simple bubble sort for demonstration purposes
+  for (int i = 0; i < array->length - 1; i++) {
+    for (int j = 0; j < array->length - i - 1; j++) {
+      if (AS_NUMBER(array->elements[j]) > AS_NUMBER(array->elements[j + 1])) {
+        Value temp = array->elements[j];
+        array->elements[j] = array->elements[j + 1];
+        array->elements[j + 1] = temp;
+      }
+    }
+  }
+}
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method) {
@@ -2276,12 +2052,6 @@ ObjNative* newNative(NativeFn function) {
   return native;
 }
 
-
-/* Strings allocate-string < Hash Tables allocate-string
-static ObjString* allocateString(char* chars, int length) {
-*/
-
-
 static ObjString* allocateString(char* chars, int length,
                                  uint32_t hash) {
 
@@ -2317,9 +2087,6 @@ static uint32_t hashString(const char* key, int length) {
 
 
 ObjString* takeString(char* chars, int length) {
-/* Strings take-string < Hash Tables take-string-hash
-  return allocateString(chars, length);
-*/
 
   uint32_t hash = hashString(chars, length);
 
@@ -2348,9 +2115,6 @@ ObjString* copyString(const char* chars, int length) {
   char* heapChars = ALLOCATE(char, length + 1);
   memcpy(heapChars, chars, length);
   heapChars[length] = '\0';
-/* Strings object-c < Hash Tables copy-string-allocate
-  return allocateString(heapChars, length);
-*/
 
   return allocateString(heapChars, length, hash);
 
@@ -2395,6 +2159,16 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
   switch (OBJ_TYPE(value)) {
+    case OBJ_ARRAY: {
+      ObjArray* array = AS_ARRAY(value);
+      printf("[");
+      for (int i = 0; i < array->length; i++) {
+        printValue(array->elements[i]);
+        if (i < array->length - 1) printf(", ");
+      }
+      printf("]");
+      break;
+    }
 
     case OBJ_BOUND_METHOD:
       printFunction(AS_BOUND_METHOD(value)->method->function);
@@ -2455,7 +2229,8 @@ void printObject(Value value) {
 
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
-
+#define IS_ARRAY(value) isObjType(value, OBJ_ARRAY)
+#define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
 
 
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
@@ -2491,7 +2266,8 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_STRING,
     OBJ_UPVALUE,
-    OBJ_EXCEPTION_HANDLER
+    OBJ_EXCEPTION_HANDLER,
+    OBJ_ARRAY 
 } ObjType;
 
 
@@ -2505,6 +2281,11 @@ struct Obj {
 
 };
 
+typedef struct {
+  Obj obj;
+  int length;
+  Value* elements;
+} ObjArray;
 
 typedef struct {
   Obj obj;
@@ -2588,6 +2369,9 @@ typedef struct {
     Obj obj;
     int catchAddress;  // Address to jump to for the catch block
 } ObjExceptionHandler;
+
+ObjArray* newArray(int length);
+void sortArray(ObjArray* array);
 
 ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method);
@@ -2880,6 +2664,8 @@ Token scanToken() {
     case ')': return makeToken(TOKEN_RIGHT_PAREN);
     case '{': return makeToken(TOKEN_LEFT_BRACE);
     case '}': return makeToken(TOKEN_RIGHT_BRACE);
+    case '[': return makeToken(TOKEN_LEFT_BRACKET);
+    case ']': return makeToken(TOKEN_RIGHT_BRACKET);
     case ';': return makeToken(TOKEN_SEMICOLON);
     case ',': return makeToken(TOKEN_COMMA);
     case '.': return makeToken(TOKEN_DOT);
@@ -2921,6 +2707,7 @@ typedef enum {
   // Single-character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
   TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
+  TOKEN_LEFT_BRACKET, TOKEN_RIGHT_BRACKET,
   TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
   TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
   // One or two character tokens.
@@ -3216,14 +3003,6 @@ void printValue(Value value) {
     printObject(value);
   }
 #else
-
-/* Chunks of Bytecode print-value < Types of Values print-number-value
-  printf("%g", value);
-*/
-/* Types of Values print-number-value < Types of Values print-value
- printf("%g", AS_NUMBER(value));
- */
-
   switch (value.type) {
     case VAL_BOOL:
       printf(AS_BOOL(value) ? "true" : "false");
@@ -3257,16 +3036,6 @@ bool valuesEqual(Value a, Value b) {
     case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
     case VAL_NIL:    return true;
     case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
-/* Strings strings-equal < Hash Tables equal
-    case VAL_OBJ: {
-      ObjString* aString = AS_STRING(a);
-      ObjString* bString = AS_STRING(b);
-      return aString->length == bString->length &&
-          memcmp(aString->chars, bString->chars,
-                 aString->length) == 0;
-    }
- */
-
     case VAL_OBJ:    return AS_OBJ(a) == AS_OBJ(b);
 
     default:         return false; // Unreachable.
@@ -3424,24 +3193,8 @@ static void runtimeError(const char* format, ...) {
   va_end(args);
   fputs("\n", stderr);
 
-/* Types of Values runtime-error < Calls and Functions runtime-error-temp
-  size_t instruction = vm.ip - vm.chunk->code - 1;
-  int line = vm.chunk->lines[instruction];
-*/
-/* Calls and Functions runtime-error-temp < Calls and Functions runtime-error-stack
-  CallFrame* frame = &vm.frames[vm.frameCount - 1];
-  size_t instruction = frame->ip - frame->function->chunk.code - 1;
-  int line = frame->function->chunk.lines[instruction];
-*/
-/* Types of Values runtime-error < Calls and Functions runtime-error-stack
-  fprintf(stderr, "[line %d] in script\n", line);
-*/
-
   for (int i = vm.frameCount - 1; i >= 0; i--) {
     CallFrame* frame = &vm.frames[i];
-/* Calls and Functions runtime-error-stack < Closures runtime-error-function
-    ObjFunction* function = frame->function;
-*/
 
     ObjFunction* function = frame->closure->function;
 
@@ -3583,18 +3336,29 @@ static Value peek(int distance) {
   return vm.stackTop[-1 - distance];
 }
 
-/* Calls and Functions call < Closures call-signature
-static bool call(ObjFunction* function, int argCount) {
-*/
+static Value arrayIndex(Value arrayVal, Value indexVal) {
+  ObjArray* array = AS_ARRAY(arrayVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= array->length) {
+    runtimeError("Array index out of bounds.");
+    return NIL_VAL;
+  }
+  return array->elements[index];
+}
+
+static Value stringIndex(Value stringVal, Value indexVal) {
+  ObjString* string = AS_STRING(stringVal);
+  int index = (int)AS_NUMBER(indexVal);
+  if (index < 0 || index >= string->length) {
+    runtimeError("String index out of bounds.");
+    return NIL_VAL;
+  }
+  char chars[2] = { string->chars[index], '\0' };
+  return OBJ_VAL(copyString(chars, 1));
+}
 
 
 static bool call(ObjClosure* closure, int argCount) {
-
-/* Calls and Functions check-arity < Closures check-arity
-  if (argCount != function->arity) {
-    runtimeError("Expected %d arguments but got %d.",
-        function->arity, argCount);
-*/
 
   if (argCount != closure->function->arity) {
     runtimeError("Expected %d arguments but got %d.",
@@ -3613,10 +3377,6 @@ static bool call(ObjClosure* closure, int argCount) {
 
 
   CallFrame* frame = &vm.frames[vm.frameCount++];
-/* Calls and Functions call < Closures call-init-closure
-  frame->function = function;
-  frame->ip = function->chunk.code;
-*/
 
   frame->closure = closure;
   frame->ip = closure->function->chunk.code;
@@ -3661,11 +3421,6 @@ static bool callValue(Value callee, int argCount) {
 
       case OBJ_CLOSURE:
         return call(AS_CLOSURE(callee), argCount);
-
-/* Calls and Functions call-value < Closures call-value-closure
-      case OBJ_FUNCTION: // [switch]
-        return call(AS_FUNCTION(callee), argCount);
-*/
 
       case OBJ_NATIVE: {
         NativeFn native = AS_NATIVE(callee);
@@ -3780,10 +3535,6 @@ static bool isFalsey(Value value) {
 
 
 static void concatenate() {
-/* Strings concatenate < Garbage Collection concatenate-peek
-  ObjString* b = AS_STRING(pop());
-  ObjString* a = AS_STRING(pop());
-*/
 
   ObjString* b = AS_STRING(peek(0));
   ObjString* a = AS_STRING(peek(1));
@@ -4075,39 +3826,118 @@ static InterpretResult run() {
       case OP_METHOD:
         defineMethod(READ_STRING());
         break;
-        case OP_TRY_START: {
-            int catchOffset = READ_SHORT();
-            push(OBJ_VAL(newExceptionHandler((int)(frame->ip - frame->closure->function->chunk.code) + catchOffset)));
-            break;
+      case OP_TRY_START: {
+          int catchOffset = READ_SHORT();
+          push(OBJ_VAL(newExceptionHandler((int)(frame->ip - frame->closure->function->chunk.code) + catchOffset)));
+          break;
+      }
+      case OP_THROW: {
+          Value error = pop(); // Get the thrown error object
+          // Unwind stack until an exception handler is found or the stack is empty
+          while (!IS_EXCEPTION_HANDLER(peek(0)) && vm.stackTop > vm.stack) {
+              pop();
+          }
+          if (vm.stackTop == vm.stack) {
+              runtimeError("Uncaught exception.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          ObjExceptionHandler* handler = AS_EXCEPTION_HANDLER(pop());
+          frame->ip = frame->closure->function->chunk.code + handler->catchAddress;
+          push(error);  // Put the error object back on the stack for the catch block
+          break;
+      }
+      case OP_CATCH_START: {
+          // Start of a catch block
+          break;
+      }
+      case OP_CATCH_END:
+      case OP_FINALLY_START: {
+          // Clean up after catch, prepare for finally
+          break;
+      }
+      case OP_FINALLY_END: {
+          // End of finally, restore normal execution flow
+          break;
+      }
+      case OP_ARRAY: {
+        int elementCount = READ_BYTE();
+        ObjArray* array = newArray(elementCount);
+        for (int i = elementCount - 1; i >= 0; i--) {
+          array->elements[i] = pop();
         }
-        case OP_THROW: {
-            Value error = pop(); // Get the thrown error object
-            // Unwind stack until an exception handler is found or the stack is empty
-            while (!IS_EXCEPTION_HANDLER(peek(0)) && vm.stackTop > vm.stack) {
-                pop();
-            }
-            if (vm.stackTop == vm.stack) {
-                runtimeError("Uncaught exception.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            ObjExceptionHandler* handler = AS_EXCEPTION_HANDLER(pop());
-            frame->ip = frame->closure->function->chunk.code + handler->catchAddress;
-            push(error);  // Put the error object back on the stack for the catch block
-            break;
+        push(OBJ_VAL(array));
+        break;
+      }
+      case OP_INDEX: {
+        Value index = pop();
+        Value collection = peek(0);
+        
+        if (IS_STRING(collection)) {
+          if (!IS_NUMBER(index)) {
+            runtimeError("String index must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          int i = (int)AS_NUMBER(index);
+          ObjString* string = AS_STRING(collection);
+          
+          if (i < 0 || i >= string->length) {
+            runtimeError("String index out of bounds.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          push(OBJ_VAL(copyString(&string->chars[i], 1)));
+        } else if (IS_ARRAY(collection)) {
+          if (!IS_NUMBER(index)) {
+            runtimeError("Array index must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          int i = (int)AS_NUMBER(index);
+          ObjArray* array = AS_ARRAY(collection);
+          
+          if (i < 0 || i >= array->length) {
+            runtimeError("Array index out of bounds.");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          
+          push(array->elements[i]);
+        } else {
+          runtimeError("Cannot index non-array or non-string.");
+          return INTERPRET_RUNTIME_ERROR;
         }
-        case OP_CATCH_START: {
-            // Start of a catch block
-            break;
+        break;
+      }
+      case OP_ARRAY_INDEX: {
+        Value index = pop();
+        Value array = pop();
+        if (!IS_ARRAY(array) || !IS_NUMBER(index)) {
+          runtimeError("Invalid array indexing.");
+          return INTERPRET_RUNTIME_ERROR;
         }
-        case OP_CATCH_END:
-        case OP_FINALLY_START: {
-            // Clean up after catch, prepare for finally
-            break;
+        push(arrayIndex(array, index));
+        break;
+      }
+      case OP_STRING_INDEX: {
+        Value index = pop();
+        Value string = pop();
+        if (!IS_STRING(string) || !IS_NUMBER(index)) {
+          runtimeError("Invalid string indexing.");
+          return INTERPRET_RUNTIME_ERROR;
         }
-        case OP_FINALLY_END: {
-            // End of finally, restore normal execution flow
-            break;
+        push(stringIndex(string, index));
+        break;
+      }
+      case OP_SORT: {
+        Value array = pop();
+        if (!IS_ARRAY(array)) {
+          runtimeError("Can only sort arrays.");
+          return INTERPRET_RUNTIME_ERROR;
         }
+        sortArray(AS_ARRAY(array));
+        push(array);
+        break;
+      }
     }
   }
 
@@ -4168,58 +3998,27 @@ InterpretResult interpret(const char* source) {
 
 
 typedef struct {
-/* Calls and Functions call-frame < Closures call-frame-closure
-  ObjFunction* function;
-*/
-
   ObjClosure* closure;
-
   uint8_t* ip;
   Value* slots;
 } CallFrame;
 
 
 typedef struct {
-/* A Virtual Machine vm-h < Calls and Functions frame-array
-  Chunk* chunk;
-*/
-/* A Virtual Machine ip < Calls and Functions frame-array
-  uint8_t* ip;
-*/
-
   CallFrame frames[FRAMES_MAX];
   int frameCount;
-  
-
-
   Value stack[STACK_MAX];
   Value* stackTop;
-
-
   Table globals;
-
-
   Table strings;
-
-
   ObjString* initString;
-
-
   ObjUpvalue* openUpvalues;
-
-
-
   size_t bytesAllocated;
   size_t nextGC;
-
-
   Obj* objects;
-
-
   int grayCount;
   int grayCapacity;
   Obj** grayStack;
-
 } VM;
 
 
@@ -4236,9 +4035,6 @@ extern VM vm;
 
 void initVM();
 void freeVM();
-/* A Virtual Machine interpret-h < Scanning on Demand vm-interpret-h
-InterpretResult interpret(Chunk* chunk);
-*/
 
 InterpretResult interpret(const char* source);
 

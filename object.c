@@ -126,12 +126,6 @@ ObjNative* newNative(NativeFn function) {
   return native;
 }
 
-
-/* Strings allocate-string < Hash Tables allocate-string
-static ObjString* allocateString(char* chars, int length) {
-*/
-
-
 static ObjString* allocateString(char* chars, int length,
                                  uint32_t hash) {
 
@@ -167,9 +161,6 @@ static uint32_t hashString(const char* key, int length) {
 
 
 ObjString* takeString(char* chars, int length) {
-/* Strings take-string < Hash Tables take-string-hash
-  return allocateString(chars, length);
-*/
 
   uint32_t hash = hashString(chars, length);
 
@@ -198,9 +189,6 @@ ObjString* copyString(const char* chars, int length) {
   char* heapChars = ALLOCATE(char, length + 1);
   memcpy(heapChars, chars, length);
   heapChars[length] = '\0';
-/* Strings object-c < Hash Tables copy-string-allocate
-  return allocateString(heapChars, length);
-*/
 
   return allocateString(heapChars, length, hash);
 

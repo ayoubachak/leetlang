@@ -63,9 +63,6 @@ extern VM vm;
 
 void initVM();
 void freeVM();
-/* A Virtual Machine interpret-h < Scanning on Demand vm-interpret-h
-InterpretResult interpret(Chunk* chunk);
-*/
 
 InterpretResult interpret(const char* source);
 
