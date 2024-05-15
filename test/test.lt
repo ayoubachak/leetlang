@@ -1,22 +1,29 @@
-fun bench(){
-    var c = clock();
-    for (var i = 0; i < 1000000; i=i+1){
-        
+class A {
+    greet(){
+        print "hello from A";
     }
-    print(clock() - c);
 }
-bench();
-// TODO : fix the try except
-// try {
-//     throw "Error occurred";
-// } catch (e) {
-//     print "Caught error: " + e;
-// } finally {
-//     print "Cleanup actions";
-// };
 
-print(nil);
 
-assert(true, "This should not fail.");
-print assert(false, "This should fail and print this message.");
+class B(A){ // we should also have access to this syntax ```class B(A){}```
+    greet(){
+        print "hello from B";
+        super(A).greet();
+    }
+}
 
+class C(A){
+    greet(){
+        print "hello from C";
+        super(A).greet();
+    }
+}
+
+class D(C){
+    greet(){
+        print "hello from D";
+        super(C).greet();
+    }
+}
+var b = B();
+b.greet();
