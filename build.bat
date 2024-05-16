@@ -16,7 +16,7 @@ gcc -c -o temp\scanner.o scanner.c -I.
 gcc -c -o temp\object.o object.c -I.
 
 rem Link the object files to create the executable
-gcc -o main temp\main.o temp\chunk.o temp\memory.o temp\debug.o temp\value.o temp\table.o temp\vm.o temp\compiler.o temp\scanner.o temp\object.o -I.
+gcc -o leet temp\main.o temp\chunk.o temp\memory.o temp\debug.o temp\value.o temp\table.o temp\vm.o temp\compiler.o temp\scanner.o temp\object.o -I.
 
 rem Clean up the object files (optional)
 del temp\*.o

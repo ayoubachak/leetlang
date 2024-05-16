@@ -213,6 +213,20 @@ static Value isinstanceNative(int argCount, Value* args) {
     return BOOL_VAL(instanceOf(instance, klass));
 }
 
+static Value asmNative(int argCount, Value* args) {
+    if (argCount != 1) {
+        runtimeError("asm takes one argument: the assembly code to execute.");
+        return NIL_VAL;
+    }
+
+    if (!IS_STRING(args[0])) {
+        runtimeError("Argument to asm must be a string.");
+        return NIL_VAL;
+    }
+    runtimeError("Not Implemented: asm");
+    return NIL_VAL;
+}
+
 static Value exitNative(int argCount, Value* args) {
     if (argCount != 1) {
         // runtimeError("exit takes one argument: the exit code.");
@@ -275,6 +289,7 @@ void initVM() {
   defineNative("assert", assertNative);
   defineNative("type", typeNative);
   defineNative("isinstance", isinstanceNative);
+  defineNative("asm", asmNative);
   defineNative("exit", exitNative);
   defineNative("sort", sortNative);
 }
