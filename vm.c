@@ -23,7 +23,7 @@
 
 #include "object.h"
 #include "memory.h"
-
+#include <stdlib.h>
 #include "vm.h"
 
 VM vm; // [one]
@@ -213,6 +213,34 @@ static Value isinstanceNative(int argCount, Value* args) {
     return BOOL_VAL(instanceOf(instance, klass));
 }
 
+static Value exitNative(int argCount, Value* args) {
+    if (argCount != 1) {
+        // runtimeError("exit takes one argument: the exit code.");
+        exit(0);
+    }
+
+    if (!IS_NUMBER(args[0])) {
+        runtimeError("Exit code must be a number.");
+        return NIL_VAL;
+    }
+
+    exit((int)AS_NUMBER(args[0]));
+    return NIL_VAL;
+}
+
+static Value sortNative(int argCount, Value* args) {
+  if (argCount != 1) {
+    runtimeError("sort takes one argument: the array to sort.");
+    return NIL_VAL;
+  }
+  if (IS_ARRAY(args[0])) {
+    sortArray(AS_ARRAY(args[0]));
+    return args[0];
+  }
+  runtimeError("Argument to sort must be an array.");
+  return NIL_VAL;
+}
+
 static Value printNative(int argCount, Value* args) {
     for (int i = 0; i < argCount; i++) {
         printValue(args[i]);
@@ -247,6 +275,8 @@ void initVM() {
   defineNative("assert", assertNative);
   defineNative("type", typeNative);
   defineNative("isinstance", isinstanceNative);
+  defineNative("exit", exitNative);
+  defineNative("sort", sortNative);
 }
 
 void freeVM() {

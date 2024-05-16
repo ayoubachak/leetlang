@@ -91,7 +91,7 @@ Compiler* current = NULL;
 
 ClassCompiler* currentClass = NULL;
 
-static void index(bool canAssign); 
+static void indexGet(bool canAssign); 
 static void array(bool canAssign);
 static void arrayIndex(bool canAssign);
 static void stringIndex(bool canAssign);
@@ -573,7 +573,7 @@ static void this_(bool canAssign) {
 
 
 
-static void index(bool canAssign) { // Implement general indexing
+static void indexGet(bool canAssign) { // Implement general indexing
   expression();
   consume(TOKEN_RIGHT_BRACKET, "Expect ']' after index.");
 
@@ -641,7 +641,7 @@ ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, // [big]
-  [TOKEN_LEFT_BRACKET] = {array, index, PREC_CALL}, // [
+  [TOKEN_LEFT_BRACKET] = {array, indexGet, PREC_CALL}, // [
   [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE}, // ]
   [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
