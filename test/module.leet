@@ -1,1 +1,3 @@
+import "sub/submodule";
+
 print("hduinbuwinduiwnudiwniu");

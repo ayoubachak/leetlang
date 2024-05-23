@@ -1,6 +1,6 @@
 import "module";
 
-
+ 
 class A {
     greet(){
         print "hello from A";
