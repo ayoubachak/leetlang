@@ -1,3 +1,5 @@
+import "module";
+
 
 class A {
     greet(){
@@ -29,12 +31,18 @@ class D < C{
 var b = B();
 b.greet();
 
+if (3 == 4){
+    print("hello world");
+} else {
+    print("math still works");
+}
+
 print("Available types");
 print("type(true)=" + type(true));
 print("type(1)=" + type(1));
 print("type('hello')=" + type("hello"));
 print("type([1])=" + type([1]));
-print("isinstance(b, B)=" + isinstance(b, B));
+// print("isinstance(b, B)=" + isinstance(b, B));
 
 var numbers = [1, 2, 3, 4, 5, 6, 7];
 print(numbers[1]);

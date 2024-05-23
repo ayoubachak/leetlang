@@ -51,6 +51,7 @@ typedef enum {
   OP_INDEX,
   OP_SET_INDEX,      // Set index
   OP_SORT,         // Sort array
+  OP_IMPORT,
 } OpCode;
 
 

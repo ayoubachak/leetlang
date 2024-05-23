@@ -960,6 +960,18 @@ static void whileStatement() {
   emitByte(OP_POP);
 }
 
+static void importStatement() {
+  consume(TOKEN_STRING, "Expect module name as a string.");
+  ObjString* moduleName = copyString(parser.previous.start + 1, parser.previous.length - 2); // Remove quotes
+  
+  // Push the module name to the stack
+  emitConstant(OBJ_VAL(moduleName));
+
+  // Call the import function from VM
+  emitByte(OP_IMPORT);
+  consume(TOKEN_SEMICOLON, "Expect ';' after import statement.");
+}
+
 static void synchronize() {
   parser.panicMode = false;
   while (parser.current.type != TOKEN_EOF) {
@@ -986,6 +998,8 @@ static void declaration() {
     classDeclaration();
   } else if (match(TOKEN_FUN)) {
     funDeclaration();
+  } else if (match(TOKEN_IMPORT)) {  // Add this line
+    importStatement();               // And this line
   } else if (match(TOKEN_VAR)) {
     varDeclaration();
   } else {

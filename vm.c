@@ -27,6 +27,38 @@
 #include "vm.h"
 
 VM vm; // [one]
+static InterpretResult importModule(ObjString* moduleName);
+
+// Function to read the contents of a file into a string
+static char* readFile(const char* path) {
+  FILE* file = fopen(path, "rb");
+  if (file == NULL) {
+    fprintf(stderr, "Could not open file \"%s\".\n", path);
+    return NULL;
+  }
+
+  fseek(file, 0L, SEEK_END);
+  size_t fileSize = ftell(file);
+  rewind(file);
+
+  char* buffer = (char*)malloc(fileSize + 1);
+  if (buffer == NULL) {
+    fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+    return NULL;
+  }
+
+  size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
+  if (bytesRead < fileSize) {
+    fprintf(stderr, "Could not read file \"%s\".\n", path);
+    free(buffer);
+    return NULL;
+  }
+
+  buffer[bytesRead] = '\0';
+  fclose(file);
+  return buffer;
+}
+
 
 static void resetStack() {
   vm.stackTop = vm.stack;
@@ -359,6 +391,8 @@ static void setArrayIndex(Value arrayVal, Value indexVal, Value value) {
 static void setStringIndex(Value stringVal, Value indexVal, Value value) {
   runtimeError("Strings are immutable.");
 }
+
+
 
 static bool call(ObjClosure* closure, int argCount) {
 
@@ -957,6 +991,17 @@ static InterpretResult run() {
         push(array);
         break;
       }
+      case OP_IMPORT: {
+        ObjString* moduleName = AS_STRING(peek(0)); // Peek instead of pop for debugging
+        if (moduleName == NULL) {
+          printf("Module name is NULL\n");
+        }
+        if (importModule(moduleName) != INTERPRET_OK) {
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        pop(); // Only pop after using the module name
+        break;
+      }
     }
   }
 
@@ -965,6 +1010,32 @@ static InterpretResult run() {
 #undef READ_CONSTANT
 #undef READ_STRING
 #undef BINARY_OP
+}
+
+
+static InterpretResult importModule(ObjString* moduleName) {
+  // Construct the module file path (assuming .leet extension)
+  char path[1024];
+  snprintf(path, sizeof(path), "%s.leet", moduleName->chars);
+  // Read the module file
+  char* source = readFile(path);
+  if (source == NULL) {
+    runtimeError("Could not read module file '%s'.", path);
+    return INTERPRET_RUNTIME_ERROR;
+  }
+
+  // Compile and execute the module
+  ObjFunction* function = compile(source);
+  free(source);
+  if (function == NULL) return INTERPRET_COMPILE_ERROR;
+
+  push(OBJ_VAL(function));
+  ObjClosure* closure = newClosure(function);
+  pop();
+  push(OBJ_VAL(closure));
+  call(closure, 0);
+
+  return run();
 }
 
 void hack(bool b) {
